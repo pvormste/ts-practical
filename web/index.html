@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Texturesynthesis Practical</title>
+    <link rel="stylesheet" href="styles/style.css"/>
+</head>
+<body>
+    <div id="loading" class="visible">
+        <img src="images/ajax-loader.gif" alt=""/>
+        <p>LOADING</p>
+    </div>
+    <div id="content" class="hidden">
+        <h1>Texturesynthesis Practical</h1>
+
+        <h2>Step 1: Select a input file</h2>
+        <label for="input-img-name">Image:</label>
+        <select id="input-img-name">
+            <option value="none">none</option>
+            <option value="simple.jpg">simple.jpg</option>
+        </select>
+        <img src="" alt="" id="img-loaded" class="hidden"/>
+        <p><img src="" alt="" id="input-img"/></p>
+
+        <h2>Step 2: Select method</h2>
+        <label for="method-option">Method:</label>
+        <select id="method-option">
+            <option value="none">none</option>
+            <option value="0">0: Starter</option>
+            <option value="1">1: Non-Parametric Sampling</option>
+        </select>
+
+        <h2>Step 3: View Result</h2>
+        <img src="" alt="" id="result-img"/>
+    </div>
+
+
+    <script type="application/dart" src="main.dart"></script>
+    <script src="packages/browser/dart.js"></script>
+</body>
+</html>

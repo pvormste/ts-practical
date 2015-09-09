@@ -1,0 +1,22 @@
+#loading {
+    width: 100px;
+    margin: auto;
+    margin-top: 200px;
+}
+
+#loading img {
+    display: block;
+    margin: auto;
+}
+
+#loading p {
+    text-align: center;
+}
+
+.visible {
+    visibility: visible;
+}
+
+.hidden {
+    visibility: hidden;
+}
