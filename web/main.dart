@@ -46,6 +46,9 @@ void initGUI() {
         case "0":
           ts.methodStarter(2, 32, 16);
           break;
+        case "1":
+          ts.methodNonParametricSampling(2, 32, 16);
+          break;
       }
 
       // Show output image
