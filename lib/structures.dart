@@ -35,6 +35,11 @@ class Vector2 {
     this.x = x;
     this.y = y;
   }
+
+  Vector2.Zero() {
+    this.x = 0;
+    this.y = 0;
+  }
 }
 
 class Pixel {
@@ -49,6 +54,4 @@ class Patch {
     this.position = position;
     this.pixel = pixel;
   }
-
-  Patch.fromMiddlepoint(Pixel)
 }

@@ -47,7 +47,7 @@ void initGUI() {
           ts.methodStarter(2, 32, 16);
           break;
         case "1":
-          ts.methodNonParametricSampling(2, 32, 16);
+          ts.methodNonParametricSampling(2, 32);
           break;
       }
 

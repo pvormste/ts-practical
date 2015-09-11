@@ -15,42 +15,52 @@ class Texturesynthesis {
   Image inputImage;
   Image synImage;
 
-  void methodStarter(int scaler, int patchSize, int patchStride) {
-    // Init patches
-    int rowsInputPatch = inputImage.height - patchSize + 1;
-    int colsInputPatch = inputImage.width - patchSize + 1;
-    int numInputPatch = rowsInputPatch * colsInputPatch;
+  void methodNonParametricSampling(int scaler, int patchSize) {
+    // HalfPatch
+    int halfPatchSize = patchSize ~/ 2;
 
-    // Init syn image
+    // Patches
+    int usableInputHeight = inputImage.height - patchSize + 1;
+    int usableInputWidth = inputImage.width - patchSize + 1;
+    int numInputPatches  = usableInputHeight * usableInputWidth;
+
+    // Syn Image
     synImage = copyResize(inputImage, inputImage.width * scaler, inputImage.height * scaler);
-    int rowsSynPatch = (((synImage.height - patchSize) / patchStride).floor() + 1).toInt();
-    int colsSynPatch = (((synImage.width - patchSize) / patchStride).floor() + 1).toInt();
-    synImage = copyResize(synImage, (colsSynPatch - 1) * patchStride + patchSize, (rowsSynPatch - 1) * patchStride + patchSize);
+    int rowsSynPatch = (((synImage.height - patchSize) / halfPatchSize).floor() + 1).toInt();
+    int colsSynPatch = (((synImage.width - patchSize) / halfPatchSize).floor() + 1).toInt();
+    synImage = copyResize(synImage, (colsSynPatch - 1) * halfPatchSize + patchSize, (rowsSynPatch - 1) * halfPatchSize + patchSize);
 
-    // Synthesis
+    // Make SynImage ugly
+    for(int i = 0; i < synImage.data.length; ++i) {
+      synImage.data[i] = NON_PARAMETRIC_UGLY;
+    }
+
+    // Initial copy
     Random rand = new Random();
-    for(int row = 0; row < rowsSynPatch; ++row) {
-      for(int col = 0; col < colsSynPatch; ++col) {
-        // Current patch in output image
-        int rowSyn = row * patchStride;
-        int colSyn = col * patchStride;
+    print("${new RGB(inputImage.getPixel(0, 0)).red} | ${new RGB(inputImage.getPixel(0, 0)).green} | ${new RGB(inputImage.getPixel(0, 0)).blue} || Bits: ${inputImage.getPixel(0, 0).bitLength}");
+    //copyPatch(new Vector2(rand.nextInt(usableInputWidth), rand.nextInt(usableInputHeight)), new Vector2.Zero(), patchSize, usableInputHeight);
+    copyInto(synImage, inputImage, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
+  }
 
-        // Pich up a random patch from the input image
-        int idxInput = rand.nextInt(numInputPatch);
-        int rowInput = ((idxInput / colsInputPatch).floor()).toInt();
-        int colInput = idxInput % colsInputPatch;
+  void copyPatch(Vector2 inputPosition, Vector2 synPosition, int patchSize, int usableInputHeight) {
+    int offsetX = 0;
+    int offsetY = 0;
+    int i = 0;
 
-        // Padding by directly copying pixels
-        for(int row_ = 0; row_ <  patchSize; ++row_) {
-          for(int col_ = 0; col_ < patchSize; ++col_) {
-            synImage.setPixel(colSyn + col_, rowSyn + row_, inputImage.getPixel(colInput + col_, rowInput + row_));
-          }
-        }
+    for(int y = synPosition.y; y < synPosition.y + patchSize; ++y) {
+      for(int x = synPosition.x; x < synPosition.x + patchSize; ++x) {
+
+
+        synImage.setPixel(x, y, inputImage.getPixel(inputPosition.x + offsetX, inputPosition.y + offsetY));
+
+        ++i;
+        offsetX = i % patchSize;
+        offsetY = ((i - x) / patchSize).floor().toInt();
       }
     }
   }
 
-  void methodNonParametricSampling(int scaler, int patchSize, int patchStride) {
+  /*void methodNonParametricSampling(int scaler, int patchSize, int patchStride) {
     // Init patches
     int rowsInputPatch = inputImage.height - patchSize + 1;
     int colsInputPatch = inputImage.width - patchSize + 1;
@@ -157,7 +167,44 @@ class Texturesynthesis {
     }
 
     return patchList;
+  }*/
+
+  void methodStarter(int scaler, int patchSize, int patchStride) {
+    // Init patches
+    int rowsInputPatch = inputImage.height - patchSize + 1;
+    int colsInputPatch = inputImage.width - patchSize + 1;
+    int numInputPatch = rowsInputPatch * colsInputPatch;
+
+    // Init syn image
+    synImage = copyResize(inputImage, inputImage.width * scaler, inputImage.height * scaler);
+    int rowsSynPatch = (((synImage.height - patchSize) / patchStride).floor() + 1).toInt();
+    int colsSynPatch = (((synImage.width - patchSize) / patchStride).floor() + 1).toInt();
+    synImage = copyResize(synImage, (colsSynPatch - 1) * patchStride + patchSize, (rowsSynPatch - 1) * patchStride + patchSize);
+
+    // Synthesis
+    Random rand = new Random();
+    for(int row = 0; row < rowsSynPatch; ++row) {
+      for(int col = 0; col < colsSynPatch; ++col) {
+        // Current patch in output image
+        int rowSyn = row * patchStride;
+        int colSyn = col * patchStride;
+
+        // Pich up a random patch from the input image
+        int idxInput = rand.nextInt(numInputPatch);
+        int rowInput = ((idxInput / colsInputPatch).floor()).toInt();
+        int colInput = idxInput % colsInputPatch;
+
+        // Padding by directly copying pixels
+        for(int row_ = 0; row_ <  patchSize; ++row_) {
+          for(int col_ = 0; col_ < patchSize; ++col_) {
+            synImage.setPixel(colSyn + col_, rowSyn + row_, inputImage.getPixel(colInput + col_, rowInput + row_));
+          }
+        }
+      }
+    }
   }
+
+
 
   void readImage(String name, ImageElement loader) {
     HttpRequest request = new HttpRequest();
