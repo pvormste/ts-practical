@@ -27,10 +27,10 @@ void initGUI() {
       imageLoaded.classes.clear();
       imageLoaded.classes.add('visible');
       imageLoaded.src = 'images/image-loader.gif';
-      inputImageElement.src = "images/${fileChooser.value}";
+      //inputImageElement.src = "images/${fileChooser.value}";
 
       // Read image
-      ts.readImage(fileChooser.value, imageLoaded);
+      ts.readImage(fileChooser.value, imageLoaded, inputImageElement);
     }
     else {
       // Reset

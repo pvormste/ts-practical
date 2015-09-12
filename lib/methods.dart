@@ -35,14 +35,33 @@ class Texturesynthesis {
       synImage.data[i] = NON_PARAMETRIC_UGLY;
     }
 
-    // Initial copy
+    // Initial copy (starting point)
     Random rand = new Random();
-    print("${new RGB(inputImage.getPixel(0, 0)).red} | ${new RGB(inputImage.getPixel(0, 0)).green} | ${new RGB(inputImage.getPixel(0, 0)).blue} || Bits: ${inputImage.getPixel(0, 0).bitLength}");
+    print("${synImage.getPixel(-1,-5)}");
     //copyPatch(new Vector2(rand.nextInt(usableInputWidth), rand.nextInt(usableInputHeight)), new Vector2.Zero(), patchSize, usableInputHeight);
     copyInto(synImage, inputImage, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
+
+    // Now fill every new pixel
+    for(int x = patchSize; x < synImage.width; ++x) {
+      for(int y = 0; y < patchSize; ++y) {
+
+        //synImage.setPixelRGBA(x, y, 0, 0, 255);
+      }
+    }
+
+    getComparisonMask(new Vector2(patchSize, 0), patchSize, halfPatchSize);
   }
 
-  void copyPatch(Vector2 inputPosition, Vector2 synPosition, int patchSize, int usableInputHeight) {
+  List<bool> getComparisonMask(Vector2 pixelPosition, int patchSize, int patchHalfSize) {
+    for(int y = pixelPosition.y - patchHalfSize; y < pixelPosition.y + patchHalfSize; ++y) {
+      for(int x = pixelPosition.x - patchHalfSize; x < pixelPosition.x + patchHalfSize; ++x) {
+        print("Position: ${x} x ${y} : Color: ${synImage.getPixel(x, y)}");
+
+      }
+    }
+  }
+
+  /*void copyPatch(Vector2 inputPosition, Vector2 synPosition, int patchSize, int usableInputHeight) {
     int offsetX = 0;
     int offsetY = 0;
     int i = 0;
@@ -58,7 +77,7 @@ class Texturesynthesis {
         offsetY = ((i - x) / patchSize).floor().toInt();
       }
     }
-  }
+  }*/
 
   /*void methodNonParametricSampling(int scaler, int patchSize, int patchStride) {
     // Init patches
@@ -206,7 +225,7 @@ class Texturesynthesis {
 
 
 
-  void readImage(String name, ImageElement loader) {
+  void readImage(String name, ImageElement loader, ImageElement inputImageElement) {
     HttpRequest request = new HttpRequest();
     request.open('GET', 'images/${name}');
     request.overrideMimeType('text\/plain; charset=x-user-defined');
@@ -222,6 +241,11 @@ class Texturesynthesis {
 
         // Visual feedback
         loader.src = 'images/success.png';
+
+        // Set input element
+        inputImageElement.src = 'images/${name}';
+        inputImageElement.width = inputImage.width;
+        inputImageElement.height = inputImage.height;
       }
       else{
         loader.src = 'images/fail.png';
@@ -236,6 +260,8 @@ class Texturesynthesis {
     var png = encodePng(synImage);
     var png64 = CryptoUtils.bytesToBase64(png);
     imgElement.src = 'data:image/png;base64,${png64}';
+    imgElement.width = synImage.width;
+    imgElement.height = synImage.height;
   }
 }
 
