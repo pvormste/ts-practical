@@ -1,10 +1,6 @@
 part of texturesynthesis.methods;
 
 class RGB {
-  static final RED_SHIFT = 16777215;
-  static final GREEN_SHIFT = 65535;
-  static final BLUE_SHIFT = 255;
-
   static int difference(RGB valueA, RGB valueB) {
     int diffRed = (valueA.red - valueB.red).abs();
     int diffGreen =  (valueA.green - valueB.green).abs();
@@ -17,13 +13,11 @@ class RGB {
   int green;
   int blue;
 
-  RGB(int value) {
-    red = (value & RED_SHIFT) >> 8*2;
-    green = (value & GREEN_SHIFT) >> 8;
-    blue = value & BLUE_SHIFT;
+  RGB(int r, int g, int b) {
+    red = r;
+    green = g;
+    blue = b;
   }
-
-
 
 }
 
@@ -46,12 +40,17 @@ class Pixel {
   Pixel(Vector2 position, RGB rgb);
 }
 
-class Patch {
-  Vector2 position;
-  List<dynamic> pixel;
+class ComparisonMaskElement {
+  bool isComparable;
+  int color;
 
-  Patch(Vector2 position, List<dynamic> pixel) {
-    this.position = position;
-    this.pixel = pixel;
+  ComparisonMaskElement.isAllowed(int color) {
+    this.isComparable = true;
+    this.color = color;
+  }
+
+  ComparisonMaskElement.notAllowed() {
+    this.isComparable = false;
+    this.color = -1;
   }
 }
