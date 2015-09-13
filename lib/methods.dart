@@ -66,12 +66,13 @@ class Texturesynthesis {
     int i = 0;
 
     // Mark the known pixels
-    for(int y = pixelPosition.y - halfPatchSize; y < pixelPosition.y + halfPatchSize; ++y) {
-      for(int x = pixelPosition.x - halfPatchSize; x < pixelPosition.x + halfPatchSize; ++x) {
+    for(int x = pixelPosition.x - halfPatchSize; x < pixelPosition.x + halfPatchSize; ++x) {
+      for(int y = pixelPosition.y - halfPatchSize; y < pixelPosition.y + halfPatchSize; ++y) {
+
         int pixelColor = synImage.getPixel(x, y);
 
         // pixel is outside image or has color of background
-        if(pixelColor == 0 || pixelColor == bgColor) {
+        if( pixelColor == 0 || pixelColor == bgColor) {
           comparisonMask[i] = new ComparisonMaskElement.notAllowed();
         }
         // pixel
@@ -89,14 +90,14 @@ class Texturesynthesis {
 
   Vector2 findCoherentPatch(List<ComparisonMaskElement> comparisonMask, int patchSize, int halfPatchSize) {
     Vector2 bestPatchPosition = new Vector2.Zero();
-    int bestPatchError = 1000;
+    int bestPatchError = 100000;
 
     int patchError = 0;
     int i = 0;
 
     // Check every possible patch
-    for(int y = 0; y < inputImage.height - halfPatchSize; ++y) {
-      for(int x = 0; x < inputImage.width- halfPatchSize; ++x) {
+    for(int y = 0; y < inputImage.height - patchSize; ++y) {
+      for(int x = 0; x < inputImage.width - patchSize; ++x) {
 
         // Patch error for this patch
         patchError = 0;
