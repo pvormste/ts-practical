@@ -36,6 +36,24 @@ class Vector2 {
   }
 }
 
+class Vector3 {
+  int x;
+  int y;
+  int rotation;
+
+  Vector3(int x, int y, int rot) {
+    this.x = x;
+    this.y = y;
+    this.rotation = rot;
+  }
+
+  Vector3.fromVector2(Vector2 pos, int rot) {
+    this.x = pos.x;
+    this.y = pos.y;
+    this.rotation = rot;
+  }
+}
+
 class Pixel {
   Pixel(Vector2 position, RGB rgb);
 }

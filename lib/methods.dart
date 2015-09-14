@@ -15,60 +15,73 @@ class Texturesynthesis {
   Image synImage;
 
   // ==== Non Parametric Sampling
-  Image methodNonParametricSampling(Image inputImg, Image synImg, int scaler, int patchSize) {
+  Image methodNonParametricSampling(Image inputImg, Image synImg, int scaler, int patchSize, bool singleResolution) {
+    // Keep rotations saved
+    List<Image> inputImagesRotated = new List<Image>();
+    inputImagesRotated.add(inputImg);
+    inputImagesRotated.add(copyRotate(inputImg, 90));
+    inputImagesRotated.add(copyRotate(inputImg, 180));
+    inputImagesRotated.add(copyRotate(inputImg, 270));
+
     // HalfPatch
     int halfPatchSize = patchSize ~/ 2;
 
     // Patches
-    int usableInputHeight = inputImage.height - patchSize + 1;
-    int usableInputWidth = inputImage.width - patchSize + 1;
-    int numInputPatches  = usableInputHeight * usableInputWidth;
+    int usableInputHeight = inputImg.height - patchSize + 1;
+    int usableInputWidth = inputImg.width - patchSize + 1;
+    //int numInputPatches  = usableInputHeight * usableInputWidth;
 
     // Syn Image
-    synImage = copyResize(inputImage, inputImage.width * scaler, inputImage.height * scaler);
-    int rowsSynPatch = (((synImage.height - patchSize) / halfPatchSize).floor() + 1).toInt();
-    int colsSynPatch = (((synImage.width - patchSize) / halfPatchSize).floor() + 1).toInt();
-    synImage = copyResize(synImage, (colsSynPatch - 1) * halfPatchSize + patchSize, (rowsSynPatch - 1) * halfPatchSize + patchSize);
+    if(singleResolution) {
+      synImg = copyResize(inputImg, inputImg.width * scaler, inputImg.height * scaler);
+    }
+    else {
+      synImg = copyResize(synImg, inputImg.width * scaler, inputImg.height * scaler);
+    }
 
-    // Make SynImage ugly
-    for(int i = 0; i < synImage.data.length; ++i) {
-      synImage.data[i] = NON_PARAMETRIC_UGLY;
+    int rowsSynPatch = (((synImg.height - patchSize) / halfPatchSize).floor() + 1).toInt();
+    int colsSynPatch = (((synImg.width - patchSize) / halfPatchSize).floor() + 1).toInt();
+    synImg = copyResize(synImg, (colsSynPatch - 1) * halfPatchSize + patchSize, (rowsSynPatch - 1) * halfPatchSize + patchSize);
+
+    // Make SynImage ugly if ther is no valuable pixel data
+    if(singleResolution) {
+      for(int i = 0; i < synImg.data.length; ++i) {
+        synImg.data[i] = NON_PARAMETRIC_UGLY;
+      }
     }
 
     // Initial copy of a random patch (starting point)
     Random rand = new Random();
     //print("${synImage.getPixel(-1,-5)}");
     //copyPatch(new Vector2(rand.nextInt(usableInputWidth), rand.nextInt(usableInputHeight)), new Vector2.Zero(), patchSize, usableInputHeight);
-    copyInto(synImage, inputImage, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
+    copyInto(synImg, inputImg, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
 
     // Now fill every new pixel in the upper part
-    for(int x = patchSize; x < synImage.width; ++x) {
-      print("Calculating col ${x - patchSize +1} of ${synImage.width - patchSize}");
+    for(int x = patchSize; x < synImg.width; ++x) {
+      print("Calculating col ${x - patchSize +1} of ${synImg.width - patchSize}");
 
       for(int y = 0; y < patchSize; ++y) {
-
         // Create the comparison Mask for this pixel
-        List<ComparisonMaskElement> comparisonMask = getComparisonMask(new Vector2(x, y), patchSize, halfPatchSize, NON_PARAMETRIC_UGLY);
+        List<ComparisonMaskElement> comparisonMask = getComparisonMask(synImg, new Vector2(x, y), patchSize, halfPatchSize, NON_PARAMETRIC_UGLY);
 
         // Find the patch with most similarity
-        Vector2 mostSimilarPatchPosition = findCoherentPatch(comparisonMask, patchSize, halfPatchSize);
-        synImage.setPixel(x, y, inputImage.getPixel(mostSimilarPatchPosition.x + halfPatchSize, mostSimilarPatchPosition.y + halfPatchSize));
+        Vector3 mostSimilarPatchPosition = findCoherentPatch(inputImagesRotated, comparisonMask, patchSize, halfPatchSize);
+        synImg.setPixel(x, y, inputImagesRotated[mostSimilarPatchPosition.rotation].getPixel(mostSimilarPatchPosition.x + halfPatchSize, mostSimilarPatchPosition.y + halfPatchSize));
 
-        //synImage.setPixelRGBA(x, y, 0, 0, 255);
       }
     }
 
     //now fill every pixel i the lower part
-    for(int y = patchSize; y < synImage.height; ++y) {
-      print("Calculating row ${y - patchSize +1} of ${synImage.height - patchSize}");
+    for(int y = patchSize; y < synImg.height; ++y) {
+      print("Calculating row ${y - patchSize +1} of ${synImg.height - patchSize}");
 
-      for(int x = 0; x < synImage.width; ++x) {
+      for(int x = 0; x < synImg.width; ++x) {
         // Create the comparison Mask for this pixel
-        List<ComparisonMaskElement> comparisonMask = getComparisonMask(new Vector2(x, y), patchSize, halfPatchSize, NON_PARAMETRIC_UGLY);
+        List<ComparisonMaskElement> comparisonMask = getComparisonMask(synImg, new Vector2(x, y), patchSize, halfPatchSize, NON_PARAMETRIC_UGLY);
 
         // Find the patch with most similarity
-        Vector2 mostSimilarPatchPosition = findCoherentPatch(comparisonMask, patchSize, halfPatchSize);
-        synImage.setPixel(x, y, inputImage.getPixel(mostSimilarPatchPosition.x + halfPatchSize, mostSimilarPatchPosition.y + halfPatchSize));
+        Vector3 mostSimilarPatchPosition = findCoherentPatch(inputImagesRotated, comparisonMask, patchSize, halfPatchSize);
+        synImg.setPixel(x, y, inputImagesRotated[mostSimilarPatchPosition.rotation].getPixel(mostSimilarPatchPosition.x + halfPatchSize, mostSimilarPatchPosition.y + halfPatchSize));
       }
     }
 
@@ -76,23 +89,37 @@ class Texturesynthesis {
   }
 
   // ==== Multiresolution
-  void methodMultiresolution(int scaler, int patchSize) {
+  Image methodMultiresolution(int scaler, int patchSize) {
 
-    // Shrink input image
-    inputImage = copyResize(inputImage, inputImage.width >> 2, inputImage.height >> 2);
+    bool  firstShift = true;
+    Image newSynImg = null;
 
-    // Calculate synImage /4
-    print("==:  Calculate 1/4 of image");
-    methodNonParametricSampling(scaler, patchSize);
+    for(int shift = 2; shift >= 0; --shift) {
+      // Shrink input image
+      Image inputImage_small = copyResize(inputImage, inputImage.width >> shift, inputImage.height >> shift);
 
-    synImage = copyResize(synImage, synImage.width << 2, synImage.height << 2);
+      // Calculate synImage /4
+      print("==:  Calculate image shifted by ${shift}");
+
+      newSynImg = methodNonParametricSampling(inputImage_small, newSynImg, scaler, patchSize, firstShift);
+
+      if(firstShift)
+      {
+        firstShift = false;
+      }
+
+      
+    }
+
+    return newSynImg;
+
   }
 
   //##########################
   // Helper functions
   //##########################
 
-  List<ComparisonMaskElement> getComparisonMask(Vector2 pixelPosition, int patchSize, int halfPatchSize, int bgColor) {
+  List<ComparisonMaskElement> getComparisonMask(Image synImg,Vector2 pixelPosition, int patchSize, int halfPatchSize, int bgColor) {
     // Mask contains patchSize * patchSize comparable pixels
     List<ComparisonMaskElement> comparisonMask = new List<ComparisonMaskElement>(patchSize * patchSize);
 
@@ -102,7 +129,7 @@ class Texturesynthesis {
     for(int x = pixelPosition.x - halfPatchSize; x < pixelPosition.x + halfPatchSize; ++x) {
       for(int y = pixelPosition.y - halfPatchSize; y < pixelPosition.y + halfPatchSize; ++y) {
 
-        int pixelColor = synImage.getPixel(x, y);
+        int pixelColor = synImg.getPixel(x, y);
 
         // pixel is outside image or has color of background
         if( pixelColor == 0 || pixelColor == bgColor) {
@@ -121,62 +148,63 @@ class Texturesynthesis {
     return comparisonMask;
   }
 
-  Vector2 findCoherentPatch(List<ComparisonMaskElement> comparisonMask, int patchSize, int halfPatchSize) {
-    Vector2 bestPatchPosition = new Vector2.Zero();
+  Vector3 findCoherentPatch(List<Image> rotatedImages, List<ComparisonMaskElement> comparisonMask, int patchSize, int halfPatchSize) {
+    Vector3 bestPatchPosition = new Vector3.fromVector2(new Vector2.Zero(), 0);
     int bestPatchError = 600000000000;
 
     int patchError = 0;
     int i = 0;
 
-    // Check every possible patch
-    for(int y = 0; y < inputImage.height - patchSize; ++y) {
-      for(int x = 0; x < inputImage.width - patchSize; ++x) {
 
-        // Patch error for this patch
-        patchError = 0;
-        i = 0;
+    for(int rot = 0; rot < rotatedImages.length; ++rot) {
+      // Check every possible patch
+      for(int y = 0; y < rotatedImages[rot].height - patchSize; ++y) {
+        for(int x = 0; x < rotatedImages[rot].width - patchSize; ++x) {
 
-        // Check every pixel in this patch
-        for(int patchPixelY = y; patchPixelY < y + patchSize; ++patchPixelY) {
+          // Patch error for this patch
+          patchError = 0;
+          i = 0;
 
-          // Dont go outside the image
-          if(patchPixelY >= inputImage.height)
-            continue;
-
-          for(int patchPixelX = x; patchPixelX < x + patchSize; ++patchPixelX) {
+          // Check every pixel in this patch
+          for(int patchPixelY = y; patchPixelY < y + patchSize; ++patchPixelY) {
 
             // Dont go outside the image
-            if(patchPixelX >= inputImage.width)
+            if(patchPixelY >= rotatedImages[rot].height)
               continue;
 
-            // Check if the mask allow comparison for this pixel
-            if(comparisonMask[i].isComparable && comparisonMask[i].color != -1) {
-              int tempColor = inputImage.getPixel(patchPixelX, patchPixelY);
-              RGB inputPixelColor = new RGB(getRed(tempColor), getGreen(tempColor), getBlue(tempColor));
+            for(int patchPixelX = x; patchPixelX < x + patchSize; ++patchPixelX) {
 
-              tempColor = comparisonMask[i].color;
-              RGB synPixelColor = new RGB(getRed(tempColor), getGreen(tempColor), getBlue(tempColor));
+              // Dont go outside the image
+              if(patchPixelX >= rotatedImages[rot].width)
+                continue;
 
-              int difference = RGB.difference(inputPixelColor, synPixelColor);
-              patchError += difference;
+              // Check if the mask allow comparison for this pixel
+              if(comparisonMask[i].isComparable && comparisonMask[i].color != -1) {
+                int tempColor = rotatedImages[rot].getPixel(patchPixelX, patchPixelY);
+                RGB inputPixelColor = new RGB(getRed(tempColor), getGreen(tempColor), getBlue(tempColor));
 
+                tempColor = comparisonMask[i].color;
+                RGB synPixelColor = new RGB(getRed(tempColor), getGreen(tempColor), getBlue(tempColor));
 
+                int difference = RGB.difference(inputPixelColor, synPixelColor);
+                patchError += difference;
+              }
+
+              ++i;
             }
-
-            ++i;
           }
+
+          // Now check if this patch is better than the best one
+          if(patchError < bestPatchError) {
+            bestPatchError = patchError;
+            bestPatchPosition = new Vector3(x, y, rot);
+          }
+
         }
-
-        // Now check if this patch is better than the best one
-        if(patchError < bestPatchError) {
-          bestPatchError = patchError;
-          bestPatchPosition = new Vector2(x, y);
-        }
-
-
-
       }
     }
+
+
 
     return bestPatchPosition;
 

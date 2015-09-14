@@ -21,20 +21,23 @@ void main(List<String> args) {
   // Read image
   ts.inputImage = decodeImage(new Io.File(inputImage).readAsBytesSync());
 
+  // Output image
+  Image output = null;
+
   // Select method
   switch(method) {
     case 0:
       ts.methodStarter(2, patchSize, patchSize >> 1);
       break;
     case 1:
-      ts.methodNonParametricSampling(2, patchSize);
+      output = ts.methodNonParametricSampling(ts.inputImage, ts.synImage, 2, patchSize, true);
       break;
     case 2:
-      ts.methodMultiresolution(2, patchSize);
+      output = ts.methodMultiresolution(2, patchSize);
       break;
   }
 
   // Write file
   new Io.File(outputImage)
-    ..writeAsBytesSync(encodePng(ts.synImage));
+    ..writeAsBytesSync(encodePng(output));
 }
