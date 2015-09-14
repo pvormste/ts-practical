@@ -50,15 +50,22 @@ class Texturesynthesis {
       }
     }
 
+    int x_start = 0;
+    int y_start = 0;
+
     // Initial copy of a random patch (starting point) if single resolution
     if(singleResolution){
       Random rand = new Random();
       copyInto(synImg, inputImg, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
+      x_start = patchSize;
+      y_start = patchSize;
     }
 
+
+
     // Now fill every new pixel in the upper part
-    for(int x = patchSize; x < synImg.width; ++x) {
-      print("Calculating col ${x - patchSize +1} of ${synImg.width - patchSize}");
+    for(int x = x_start; x < synImg.width; ++x) {
+      print("Calculating col ${x - x_start +1} of ${synImg.width - x_start}");
 
       for(int y = 0; y < patchSize; ++y) {
         // Create the comparison Mask for this pixel
@@ -72,8 +79,8 @@ class Texturesynthesis {
     }
 
     //now fill every pixel i the lower part
-    for(int y = patchSize; y < synImg.height; ++y) {
-      print("Calculating row ${y - patchSize +1} of ${synImg.height - patchSize}");
+    for(int y = y_start; y < synImg.height; ++y) {
+      print("Calculating row ${y - y_start +1} of ${synImg.height - y_start}");
 
       for(int x = 0; x < synImg.width; ++x) {
         // Create the comparison Mask for this pixel
@@ -89,12 +96,12 @@ class Texturesynthesis {
   }
 
   // ==== Multiresolution
-  Image methodMultiresolution(int scaler, int patchSize) {
+  Image methodMultiresolution(int scaler, int patchSize, int maxShift) {
 
     bool  firstShift = true;
     Image newSynImg = null;
 
-    for(int shift = 3; shift >= 0; --shift) {
+    for(int shift = maxShift; shift >= 0; --shift) {
       // Shrink input image
       Image inputImage_small = copyResize(inputImage, inputImage.width >> shift, inputImage.height >> shift);
 
