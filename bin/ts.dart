@@ -28,6 +28,10 @@ void main(List<String> args) {
       break;
     case 1:
       ts.methodNonParametricSampling(2, patchSize);
+      break;
+    case 2:
+      ts.methodMultiresolution(2, patchSize);
+      break;
   }
 
   // Write file

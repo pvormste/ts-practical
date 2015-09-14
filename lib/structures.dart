@@ -6,7 +6,7 @@ class RGB {
     int diffGreen =  (valueA.green - valueB.green).abs();
     int diffBlue = (valueA.blue - valueB.blue).abs();
 
-    return (diffRed + diffGreen + diffBlue);
+    return ((diffRed*diffRed) + (diffGreen*diffGreen) + (diffBlue*diffBlue));
   }
 
   int red;

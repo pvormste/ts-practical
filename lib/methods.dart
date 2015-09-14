@@ -14,7 +14,8 @@ class Texturesynthesis {
   Image inputImage;
   Image synImage;
 
-  void methodNonParametricSampling(int scaler, int patchSize) {
+  // ==== Non Parametric Sampling
+  Image methodNonParametricSampling(Image inputImg, Image synImg, int scaler, int patchSize) {
     // HalfPatch
     int halfPatchSize = patchSize ~/ 2;
 
@@ -40,8 +41,10 @@ class Texturesynthesis {
     //copyPatch(new Vector2(rand.nextInt(usableInputWidth), rand.nextInt(usableInputHeight)), new Vector2.Zero(), patchSize, usableInputHeight);
     copyInto(synImage, inputImage, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
 
-    // Now fill every new pixel
+    // Now fill every new pixel in the upper part
     for(int x = patchSize; x < synImage.width; ++x) {
+      print("Calculating col ${x - patchSize +1} of ${synImage.width - patchSize}");
+
       for(int y = 0; y < patchSize; ++y) {
 
         // Create the comparison Mask for this pixel
@@ -55,8 +58,39 @@ class Texturesynthesis {
       }
     }
 
-    //getComparisonMask(new Vector2(patchSize, 0), patchSize, halfPatchSize, NON_PARAMETRIC_UGLY);
+    //now fill every pixel i the lower part
+    for(int y = patchSize; y < synImage.height; ++y) {
+      print("Calculating row ${y - patchSize +1} of ${synImage.height - patchSize}");
+
+      for(int x = 0; x < synImage.width; ++x) {
+        // Create the comparison Mask for this pixel
+        List<ComparisonMaskElement> comparisonMask = getComparisonMask(new Vector2(x, y), patchSize, halfPatchSize, NON_PARAMETRIC_UGLY);
+
+        // Find the patch with most similarity
+        Vector2 mostSimilarPatchPosition = findCoherentPatch(comparisonMask, patchSize, halfPatchSize);
+        synImage.setPixel(x, y, inputImage.getPixel(mostSimilarPatchPosition.x + halfPatchSize, mostSimilarPatchPosition.y + halfPatchSize));
+      }
+    }
+
+    return synImg;
   }
+
+  // ==== Multiresolution
+  void methodMultiresolution(int scaler, int patchSize) {
+
+    // Shrink input image
+    inputImage = copyResize(inputImage, inputImage.width >> 2, inputImage.height >> 2);
+
+    // Calculate synImage /4
+    print("==:  Calculate 1/4 of image");
+    methodNonParametricSampling(scaler, patchSize);
+
+    synImage = copyResize(synImage, synImage.width << 2, synImage.height << 2);
+  }
+
+  //##########################
+  // Helper functions
+  //##########################
 
   List<ComparisonMaskElement> getComparisonMask(Vector2 pixelPosition, int patchSize, int halfPatchSize, int bgColor) {
     // Mask contains patchSize * patchSize comparable pixels
@@ -89,7 +123,7 @@ class Texturesynthesis {
 
   Vector2 findCoherentPatch(List<ComparisonMaskElement> comparisonMask, int patchSize, int halfPatchSize) {
     Vector2 bestPatchPosition = new Vector2.Zero();
-    int bestPatchError = 100000;
+    int bestPatchError = 600000000000;
 
     int patchError = 0;
     int i = 0;
@@ -148,133 +182,8 @@ class Texturesynthesis {
 
   }
 
-  /*void copyPatch(Vector2 inputPosition, Vector2 synPosition, int patchSize, int usableInputHeight) {
-    int offsetX = 0;
-    int offsetY = 0;
-    int i = 0;
 
-    for(int y = synPosition.y; y < synPosition.y + patchSize; ++y) {
-      for(int x = synPosition.x; x < synPosition.x + patchSize; ++x) {
-
-
-        synImage.setPixel(x, y, inputImage.getPixel(inputPosition.x + offsetX, inputPosition.y + offsetY));
-
-        ++i;
-        offsetX = i % patchSize;
-        offsetY = ((i - x) / patchSize).floor().toInt();
-      }
-    }
-  }*/
-
-  /*void methodNonParametricSampling(int scaler, int patchSize, int patchStride) {
-    // Init patches
-    int rowsInputPatch = inputImage.height - patchSize + 1;
-    int colsInputPatch = inputImage.width - patchSize + 1;
-    int numInputPatch = rowsInputPatch * colsInputPatch;
-
-    // Init syn image
-    synImage = copyResize(inputImage, inputImage.width * scaler, inputImage.height * scaler);
-    int rowsSynPatch = (((synImage.height - patchSize) / patchStride).floor() + 1).toInt();
-    int colsSynPatch = (((synImage.width - patchSize) / patchStride).floor() + 1).toInt();
-    synImage = copyResize(synImage, (colsSynPatch - 1) * patchStride + patchSize, (rowsSynPatch - 1) * patchStride + patchSize);
-
-    // Extract all patches of input image
-
-
-    // Make SynImage ugly
-    for(int i = 0; i < synImage.data.length; ++i) {
-      synImage.data[i] = NON_PARAMETRIC_UGLY;
-    }
-
-    // Synthesis
-    Random rand = new Random();
-    for(int row = 0; row < rowsSynPatch; ++row) {
-      for(int col = 0; col < colsSynPatch; ++col) {
-
-        // Index of patch
-        int idxInput = -1;
-        int rowSyn = row * patchStride;
-        int colSyn = col * patchStride;
-        List<dynamic> halfPatchPixels = null;
-
-        if(row == 0 && col == 0) {
-          // First Patch
-          idxInput  = rand.nextInt(numInputPatch);
-          halfPatchPixels = copyPatch(synImage.width, patchSize, rowSyn, colSyn, idxInput, colsInputPatch);
-        } else if(col > patchSize && row <= patchSize) {
-          //idxInput =
-        }
-
-
-
-
-
-
-
-
-
-        // Current patch in output image
-        /*int rowSyn = row * patchStride;
-        int colSyn = col * patchStride;
-
-        // Pich up a random patch from the input image
-        int idxInput = rand.nextInt(numInputPatch);
-        int rowInput = ((idxInput / colsInputPatch).floor()).toInt();
-        int colInput = idxInput % colsInputPatch;
-*/
-
-      }
-    }
-  }
-
-  List<dynamic> copyPatch(int width, int patchSize, int rowSyn, int colSyn, int idxInput, int colsInputPatch) {
-    int rowInput = ((idxInput / colsInputPatch).floor()).toInt();
-    int colInput = idxInput % colsInputPatch;
-    List<dynamic> colors =  new List<dynamic>();
-
-    // Padding by directly copying pixels
-    for(int row_ = 0; row_ <  patchSize; ++row_) {
-      for(int col_ = 0; col_ < patchSize; ++col_) {
-        synImage.setPixel(colSyn + col_, rowSyn + row_, inputImage.getPixel(colInput + col_, rowInput + row_));
-
-        // Save RGB values
-        if(col_ >= patchSize / 2) {
-          Vector2 pos = new Vector2(colSyn + col_, rowSyn + row_);
-          print("${pos.x} | ${pos.y} : " + (pos.y * (width) + pos.x).toString());
-          RGB color = new RGB(synImage.data[pos.y * (width) + pos.x]);
-
-         colors.add(new Pixel(pos, color));
-        }
-      }
-    }
-
-    return colors;
-  }
-
-  List<dynamic> extractInputRGB(int width, int height, int patchSize) {
-    List<dynamic> patchList = new List<dynamic>();
-    for(int row = 0; row < height - patchSize; ++row) {
-      for(int col = 0; col < width - patchSize; ++col) {
-        // Now for every pixel in  this patch
-        Vector2 pos = new Vector2(col, row);
-        List<dynamic> pixelList =  new List<dynamic>();
-
-        for(int pixelY = pos.y; pixelY < pos.y + patchSize; ++pixelY) {
-          for(int pixelX  =  pos.x; pixelX < pixelX + patchSize; ++pixelX) {
-            Vector2 pixelPos = new Vector2(pixelX, pixelY);
-            RGB pixelRGB =  new RGB(inputImage.data[pixelY * width + pixelX]);
-
-            pixelList.add(new Pixel(pixelPos, pixelRGB));
-          }
-        }
-
-        patchList.add(new Patch(pos, pixelList));
-      }
-    }
-
-    return patchList;
-  }*/
-
+  // ==== Starter function
   void methodStarter(int scaler, int patchSize, int patchStride) {
     // Init patches
     int rowsInputPatch = inputImage.height - patchSize + 1;
