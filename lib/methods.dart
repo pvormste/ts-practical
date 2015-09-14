@@ -50,11 +50,11 @@ class Texturesynthesis {
       }
     }
 
-    // Initial copy of a random patch (starting point)
-    Random rand = new Random();
-    //print("${synImage.getPixel(-1,-5)}");
-    //copyPatch(new Vector2(rand.nextInt(usableInputWidth), rand.nextInt(usableInputHeight)), new Vector2.Zero(), patchSize, usableInputHeight);
-    copyInto(synImg, inputImg, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
+    // Initial copy of a random patch (starting point) if single resolution
+    if(singleResolution){
+      Random rand = new Random();
+      copyInto(synImg, inputImg, dstX: 0, dstY: 0, srcX: rand.nextInt(usableInputWidth), srcY: rand.nextInt(usableInputHeight), srcW: patchSize, srcH: patchSize);
+    }
 
     // Now fill every new pixel in the upper part
     for(int x = patchSize; x < synImg.width; ++x) {
@@ -94,7 +94,7 @@ class Texturesynthesis {
     bool  firstShift = true;
     Image newSynImg = null;
 
-    for(int shift = 2; shift >= 0; --shift) {
+    for(int shift = 3; shift >= 0; --shift) {
       // Shrink input image
       Image inputImage_small = copyResize(inputImage, inputImage.width >> shift, inputImage.height >> shift);
 
@@ -108,7 +108,7 @@ class Texturesynthesis {
         firstShift = false;
       }
 
-      
+
     }
 
     return newSynImg;
