@@ -33,7 +33,13 @@ void main(List<String> args) {
       output = ts.methodNonParametricSampling(ts.inputImage, ts.synImage, 2, patchSize, true);
       break;
     case 2:
-      output = ts.methodMultiresolution(2, patchSize, 3);
+      output = ts.methodMultiresolution(2, patchSize, 3, MultiResMethod.nonParametric);
+      break;
+    case 3:
+      output = ts.methodExampleBased(ts.inputImage, ts.synImage, 2, patchSize, true);
+      break;
+    case 4:
+      output = ts.methodMultiresolution(2, patchSize, 3, MultiResMethod.exampleBased);
       break;
   }
 

@@ -6,6 +6,11 @@ import 'package:image/image.dart';
 
 part 'structures.dart';
 
+enum MultiResMethod{
+  nonParametric,
+  exampleBased
+}
+
 class Texturesynthesis {
   // Statics
   static final int NON_PARAMETRIC_UGLY = 4294620397;
@@ -96,7 +101,7 @@ class Texturesynthesis {
   }
 
   // ==== Multiresolution
-  Image methodMultiresolution(int scaler, int patchSize, int maxShift) {
+  Image methodMultiresolution(int scaler, int patchSize, int maxShift, MultiResMethod method) {
 
     bool  firstShift = true;
     Image newSynImg = null;
@@ -108,7 +113,14 @@ class Texturesynthesis {
       // Calculate synImage /4
       print("==:  Calculate image shifted by ${shift}");
 
-      newSynImg = methodNonParametricSampling(inputImage_small, newSynImg, scaler, patchSize, firstShift);
+      switch (method){
+        case MultiResMethod.nonParametric:
+          newSynImg = methodNonParametricSampling(inputImage_small, newSynImg, scaler, patchSize, firstShift);
+          break;
+        case MultiResMethod.exampleBased:
+          newSynImg = methodExampleBased(inputImage_small, newSynImg, scaler, patchSize, firstShift);
+          break;
+      }
 
       if(firstShift)
       {
@@ -122,6 +134,58 @@ class Texturesynthesis {
 
   }
 
+  Image methodExampleBased(Image inputImg, Image synImg, int scaler, int patchSize, [bool singleResolution = false]) {
+
+    if(singleResolution) {
+      // Resizing synImage, noising
+      synImg = copyResize(inputImg, inputImg.width * scaler, inputImg.height * scaler);
+      synImg = noise(synImg, 5000.0);
+    }
+    else {
+      synImg = copyResize(synImg, inputImg.width * scaler, inputImg.height * scaler);
+    }
+
+    // .
+    int yMax = synImg.height - patchSize +1;
+    int xMax = synImg.width - patchSize +1;
+    int patchNum = yMax * xMax;
+
+    //Matrix for saving best matching patches
+    Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
+    List<Image> input = new List<Image>()
+      ..add(inputImg);
+
+    List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
+    int iter = 0;
+
+    //Number of Iterations
+    while(iter < 5) {
+      //Going through the image finding every patch
+      for (int y = 0; y < yMax; ++y) {
+        for (int x = 0; x < xMax; ++x) {
+          int currPatch = y * yMax + x;
+
+          if (currPatch % 100 == 0)
+            print("Iteration: ${iter+1} - Calculating patch ${currPatch} of ${patchNum}");
+
+          int i = 0;
+          for (int patchY = y; patchY < y + patchSize; ++patchY) {
+            for (int patchX = x; patchX < x + patchSize; ++patchX) {
+              mask[i] = new ComparisonMaskElement.isAllowed(synImg.getPixel(patchX, patchY));
+              ++i;
+            }
+          }
+
+          bestMatch.insert(x, y, findCoherentPatch(input, mask, patchSize, patchSize >> 1, withRotation:false));
+          copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
+        }
+      }
+      print("####  Iteration ${iter +1} finished!  ####################################");
+      ++iter;
+    }
+
+    return synImg;
+  }
   //##########################
   // Helper functions
   //##########################
@@ -155,15 +219,20 @@ class Texturesynthesis {
     return comparisonMask;
   }
 
-  Vector3 findCoherentPatch(List<Image> rotatedImages, List<ComparisonMaskElement> comparisonMask, int patchSize, int halfPatchSize) {
+  Vector3 findCoherentPatch(List<Image> rotatedImages, List<ComparisonMaskElement> comparisonMask, int patchSize, int halfPatchSize, {withRotation: true}) {
     Vector3 bestPatchPosition = new Vector3.fromVector2(new Vector2.Zero(), 0);
     int bestPatchError = 600000000000;
 
     int patchError = 0;
     int i = 0;
 
+    int rotMax = 1;
 
-    for(int rot = 0; rot < rotatedImages.length; ++rot) {
+    if(withRotation) {
+      rotMax = rotatedImages.length;
+    }
+
+    for(int rot = 0; rot < rotMax; ++rot) {
       // Check every possible patch
       for(int y = 0; y < rotatedImages[rot].height - patchSize; ++y) {
         for(int x = 0; x < rotatedImages[rot].width - patchSize; ++x) {
@@ -216,6 +285,7 @@ class Texturesynthesis {
     return bestPatchPosition;
 
   }
+
 
 
   // ==== Starter function

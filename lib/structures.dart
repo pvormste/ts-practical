@@ -54,8 +54,24 @@ class Vector3 {
   }
 }
 
-class Pixel {
-  Pixel(Vector2 position, RGB rgb);
+class Matrix<T>{
+  List<T> _data;
+  int _col;
+  int _row;
+
+  Matrix(int col, int row) {
+    this._col = col;
+    this._row = row;
+    this._data = new List<T>(this._col * this._row);
+  }
+
+  void insert(int x, int y, T value){
+    this._data[y * this._col +x]= value;
+  }
+
+  T getValue(int x, int y){
+    return this._data[y * this._col +x];
+  }
 }
 
 class ComparisonMaskElement {
