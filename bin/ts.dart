@@ -24,6 +24,9 @@ void main(List<String> args) {
   // Output image
   Image output = null;
 
+  // save current time
+  DateTime now = new DateTime.now();
+
   // Select method
   switch(method) {
     case 0:
@@ -42,6 +45,9 @@ void main(List<String> args) {
       output = ts.methodMultiresolution(2, patchSize, 3, MultiResMethod.exampleBased);
       break;
   }
+  //print
+  DateTime finishTime = new DateTime.now();
+  print("Start: ${now} | End: ${finishTime} | Execution Time: ${finishTime.difference(now).inMinutes}");
 
   // Write file
   new Io.File(outputImage)

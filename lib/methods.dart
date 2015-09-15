@@ -150,24 +150,29 @@ class Texturesynthesis {
     int xMax = synImg.width - patchSize +1;
     int patchNum = yMax * xMax;
 
+    // Iterations
+    int iter = 0;
+    int numIter = 22;
+
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
     List<Image> input = new List<Image>()
       ..add(inputImg);
 
     List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
-    int iter = 0;
 
-    //Number of Iterations
-    while(iter < 5) {
-      //Going through the image finding every patch
+
+    while(iter < numIter) {
+
+      // Going through the synImage finding every patch
       for (int y = 0; y < yMax; ++y) {
         for (int x = 0; x < xMax; ++x) {
           int currPatch = y * yMax + x;
 
           if (currPatch % 100 == 0)
-            print("Iteration: ${iter+1} - Calculating patch ${currPatch} of ${patchNum}");
+            print("Iteration: ${iter+1}/${numIter} - Calculating patch ${currPatch} of ${patchNum}");
 
+          // Creating ComparisonMask
           int i = 0;
           for (int patchY = y; patchY < y + patchSize; ++patchY) {
             for (int patchX = x; patchX < x + patchSize; ++patchX) {
@@ -177,9 +182,28 @@ class Texturesynthesis {
           }
 
           bestMatch.insert(x, y, findCoherentPatch(input, mask, patchSize, patchSize >> 1, withRotation:false));
-          copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
         }
       }
+
+      if (iter % 2 == 0){
+        for (int y = 0; y < yMax; ++y) {
+          for (int x = 0; x < xMax; ++x) {
+            copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
+          }
+        }
+
+      }
+      else {
+        for (int y = yMax - 1; y >= 0; --y) {
+          for (int x = xMax - 1; x >= 0; --x) {
+            copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
+          }
+        }
+
+      }
+
+
+
       print("####  Iteration ${iter +1} finished!  ####################################");
       ++iter;
     }

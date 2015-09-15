@@ -2,9 +2,9 @@ part of texturesynthesis.methods;
 
 class RGB {
   static int difference(RGB valueA, RGB valueB) {
-    int diffRed = (valueA.red - valueB.red).abs();
-    int diffGreen =  (valueA.green - valueB.green).abs();
-    int diffBlue = (valueA.blue - valueB.blue).abs();
+    int diffRed = (valueA.red - valueB.red);
+    int diffGreen =  (valueA.green - valueB.green);
+    int diffBlue = (valueA.blue - valueB.blue);
 
     return ((diffRed*diffRed) + (diffGreen*diffGreen) + (diffBlue*diffBlue));
   }
@@ -72,6 +72,9 @@ class Matrix<T>{
   T getValue(int x, int y){
     return this._data[y * this._col +x];
   }
+
+  int get cols => _col;
+  int get rows => _row;
 }
 
 class ComparisonMaskElement {
