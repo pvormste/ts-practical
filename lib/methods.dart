@@ -152,17 +152,35 @@ class Texturesynthesis {
 
     // Iterations
     int iter = 0;
-    int numIter = 2;
+    int numIter = 5;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
-    Matrix <RGB> colorMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, new RGB(0, 0, 0));
-    Matrix <int> countMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, 0);
+
+    // Matrix for saving the color values
+    Matrix <RGB> colorMatrix = new Matrix(synImg.width, synImg.height);
+    for(int y = 0; y < synImg.height; ++y) {
+      for(int x = 0; x < synImg.width; ++x) {
+        int color = synImg.getPixel(x, y);
+        int red = getRed(color);
+        int green = getGreen(color);
+        int blue = getBlue(color);
+
+        colorMatrix.insert(x, y, new RGB(red, green, blue));
+      }
+    }
+
+    // Matrix for counting the overlap
+    Matrix <int> countMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, 1);
+
+    // List for the input image for the coherent method
     List<Image> input = new List<Image>()
       ..add(inputImg);
 
+    // Creating the Mask for comparison
     List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
-    print(colorMatrix.getValue(synImg.width-1, synImg.height-1));
+
+    print("0:0 : ${colorMatrix.getValue(0, 0)}");
 
     while(iter < numIter) {
 
@@ -186,59 +204,51 @@ class Texturesynthesis {
         }
       }
 
-      if (iter % 1 == 0){
-        for (int y = 0; y < yMax; ++y) {
-          for (int x = 0; x < xMax; ++x) {
-            //copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
-            Vector3 posPatchInInput = bestMatch.getValue(x, y);
+      for (int y = 0; y < yMax; ++y) {
+        for (int x = 0; x < xMax; ++x) {
+          Vector3 posPatchInInput = bestMatch.getValue(x, y);
 
-            for(int patchY = 0; patchY < patchSize; ++patchY){
-              for(int patchX = 0; patchX < patchSize; ++patchX){
+          for(int patchY = 0; patchY < patchSize; ++patchY){
+            for(int patchX = 0; patchX < patchSize; ++patchX){
 
-                int color = inputImg.getPixel(posPatchInInput.x + patchX, posPatchInInput.y + patchY);
+              int color = inputImg.getPixel(posPatchInInput.x + patchX, posPatchInInput.y + patchY);
 
-                int red = getRed(color);
-                int green = getGreen(color);
-                int blue = getGreen(color);
+              int red = getRed(color);
+              int green = getGreen(color);
+              int blue = getBlue(color);
 
 
-                int newRed = colorMatrix.getValue(x + patchX, y + patchY).red + red;
-                int newGreen = colorMatrix.getValue(x + patchX, y + patchY).green + green;
-                int newBlue = colorMatrix.getValue(x + patchX, y + patchY).blue + blue;
-                RGB newColor = new RGB(newRed, newGreen, newBlue);
+              int newRed = colorMatrix.getValue(x + patchX, y + patchY).red + red;
+              int newGreen = colorMatrix.getValue(x + patchX, y + patchY).green + green;
+              int newBlue = colorMatrix.getValue(x + patchX, y + patchY).blue + blue;
 
-                int newCount = countMatrix.getValue(x + patchX, y + patchY) + 1;
+              int newCount = countMatrix.getValue(x + patchX, y + patchY) + 1;
 
-                colorMatrix.insert(x, y, newColor);
-                countMatrix.insert(x, y, newCount);
-              }
+              colorMatrix.insert(x + patchX, y + patchY, new RGB(newRed, newGreen, newBlue));
+              countMatrix.insert(x + patchX, y + patchY, newCount);
             }
           }
         }
-
-        print(countMatrix.getDataValue(countMatrix.size - 1));
-
-        for(int i = 0; i < colorMatrix.size; ++i) {
-
-          colorMatrix.setDataValue(i, colorMatrix.getDataValue(i) / countMatrix.getDataValue(i));
-        }
-
-        for (int y = 0; y < synImage.height; ++y) {
-          for (int x = 0; x < synImage.width; ++x) {
-
-            synImage.setPixelRGBA(x, y, colorMatrix.getValue(x, y).red, colorMatrix.getValue(x, y).green, colorMatrix.getValue(x, y).blue);
-          }
-        }
-
       }
-      else {
-        for (int y = yMax - 1; y >= 0; --y) {
-          for (int x = xMax - 1; x >= 0; --x) {
-            copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
-          }
-        }
 
+      print(countMatrix.getDataValue(countMatrix.size - 1));
+
+      for(int i = 0; i < colorMatrix.size; ++i) {
+        RGB currentColor = colorMatrix.getDataValue(i);
+        int divider = countMatrix.getDataValue(i);
+
+        currentColor.red ~/= divider;
+        currentColor.green ~/= divider;
+        currentColor.blue ~/= divider;
+        colorMatrix.setDataValue(i,  currentColor);
       }
+
+      for (int y = 0; y < synImg.height; ++y) {
+        for (int x = 0; x < synImg.width; ++x) {
+          synImg.setPixelRGBA(x, y, colorMatrix.getValue(x, y).red, colorMatrix.getValue(x, y).green, colorMatrix.getValue(x, y).blue);
+        }
+      }
+
 
 
       colorMatrix.resetMatrix(new RGB(0, 0, 0));
