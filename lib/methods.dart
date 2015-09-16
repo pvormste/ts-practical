@@ -152,23 +152,14 @@ class Texturesynthesis {
 
     // Iterations
     int iter = 0;
-    int numIter = 5;
+    int numIter = 20;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
 
     // Matrix for saving the color values
     Matrix <RGB> colorMatrix = new Matrix(synImg.width, synImg.height);
-    for(int y = 0; y < synImg.height; ++y) {
-      for(int x = 0; x < synImg.width; ++x) {
-        int color = synImg.getPixel(x, y);
-        int red = getRed(color);
-        int green = getGreen(color);
-        int blue = getBlue(color);
 
-        colorMatrix.insert(x, y, new RGB(red, green, blue));
-      }
-    }
 
     // Matrix for counting the overlap
     Matrix <int> countMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, 1);
@@ -183,6 +174,17 @@ class Texturesynthesis {
     print("0:0 : ${colorMatrix.getValue(0, 0)}");
 
     while(iter < numIter) {
+      // Setup Color Matrix
+      for(int y = 0; y < synImg.height; ++y) {
+        for(int x = 0; x < synImg.width; ++x) {
+          int color = synImg.getPixel(x, y);
+          int red = getRed(color);
+          int green = getGreen(color);
+          int blue = getBlue(color);
+
+          colorMatrix.insert(x, y, new RGB(red, green, blue));
+        }
+      }
 
       // Going through the synImage finding every patch
       for (int y = 0; y < yMax; ++y) {
@@ -231,8 +233,6 @@ class Texturesynthesis {
         }
       }
 
-      print(countMatrix.getDataValue(countMatrix.size - 1));
-
       for(int i = 0; i < colorMatrix.size; ++i) {
         RGB currentColor = colorMatrix.getDataValue(i);
         int divider = countMatrix.getDataValue(i);
@@ -251,7 +251,7 @@ class Texturesynthesis {
 
 
 
-      colorMatrix.resetMatrix(new RGB(0, 0, 0));
+      //colorMatrix.resetMatrix(new RGB(0, 0, 0));
       countMatrix.resetMatrix(0);
       print("####  Iteration ${iter +1} finished!  ####################################");
       ++iter;
