@@ -171,8 +171,6 @@ class Texturesynthesis {
     // Creating the Mask for comparison
     List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
 
-    print("0:0 : ${colorMatrix.getValue(0, 0)}");
-
     while(iter < numIter) {
       // Setup Color Matrix
       for(int y = 0; y < synImg.height; ++y) {
