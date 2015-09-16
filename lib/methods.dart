@@ -152,15 +152,17 @@ class Texturesynthesis {
 
     // Iterations
     int iter = 0;
-    int numIter = 22;
+    int numIter = 2;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
+    Matrix <RGB> colorMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, new RGB(0, 0, 0));
+    Matrix <int> countMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, 0);
     List<Image> input = new List<Image>()
       ..add(inputImg);
 
     List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
-
+    print(colorMatrix.getValue(synImg.width-1, synImg.height-1));
 
     while(iter < numIter) {
 
@@ -180,15 +182,51 @@ class Texturesynthesis {
               ++i;
             }
           }
-
           bestMatch.insert(x, y, findCoherentPatch(input, mask, patchSize, patchSize >> 1, withRotation:false));
         }
       }
 
-      if (iter % 2 == 0){
+      if (iter % 1 == 0){
         for (int y = 0; y < yMax; ++y) {
           for (int x = 0; x < xMax; ++x) {
-            copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
+            //copyInto(synImg, inputImg, dstX: x, dstY: y, srcX: bestMatch.getValue(x, y).x, srcY: bestMatch.getValue(x, y).y, srcW: patchSize, srcH: patchSize);
+            Vector3 posPatchInInput = bestMatch.getValue(x, y);
+
+            for(int patchY = 0; patchY < patchSize; ++patchY){
+              for(int patchX = 0; patchX < patchSize; ++patchX){
+
+                int color = inputImg.getPixel(posPatchInInput.x + patchX, posPatchInInput.y + patchY);
+
+                int red = getRed(color);
+                int green = getGreen(color);
+                int blue = getGreen(color);
+
+
+                int newRed = colorMatrix.getValue(x + patchX, y + patchY).red + red;
+                int newGreen = colorMatrix.getValue(x + patchX, y + patchY).green + green;
+                int newBlue = colorMatrix.getValue(x + patchX, y + patchY).blue + blue;
+                RGB newColor = new RGB(newRed, newGreen, newBlue);
+
+                int newCount = countMatrix.getValue(x + patchX, y + patchY) + 1;
+
+                colorMatrix.insert(x, y, newColor);
+                countMatrix.insert(x, y, newCount);
+              }
+            }
+          }
+        }
+
+        print(countMatrix.getDataValue(countMatrix.size - 1));
+
+        for(int i = 0; i < colorMatrix.size; ++i) {
+
+          colorMatrix.setDataValue(i, colorMatrix.getDataValue(i) / countMatrix.getDataValue(i));
+        }
+
+        for (int y = 0; y < synImage.height; ++y) {
+          for (int x = 0; x < synImage.width; ++x) {
+
+            synImage.setPixelRGBA(x, y, colorMatrix.getValue(x, y).red, colorMatrix.getValue(x, y).green, colorMatrix.getValue(x, y).blue);
           }
         }
 
@@ -203,7 +241,8 @@ class Texturesynthesis {
       }
 
 
-
+      colorMatrix.resetMatrix(new RGB(0, 0, 0));
+      countMatrix.resetMatrix(0);
       print("####  Iteration ${iter +1} finished!  ####################################");
       ++iter;
     }

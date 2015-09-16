@@ -19,6 +19,18 @@ class RGB {
     blue = b;
   }
 
+  operator +(RGB other) {
+    red += other.red;
+    green += other.green;
+    blue += other.blue;
+  }
+
+  operator /(int divider) {
+    red ~/= divider;
+    green ~/= divider;
+    blue ~/= divider;
+  }
+
 }
 
 class Vector2 {
@@ -65,6 +77,19 @@ class Matrix<T>{
     this._data = new List<T>(this._col * this._row);
   }
 
+  Matrix.fillOnCreate(int col, int row, T value) {
+    this._col = col;
+    this._row = row;
+    this._data = new List<T>(this._col * this._row);
+    resetMatrix(value);
+  }
+
+  void resetMatrix(T value) {
+    for(int i = 0; i < this._data.length; ++i) {
+      this._data[i] = value;
+    }
+  }
+
   void insert(int x, int y, T value){
     this._data[y * this._col +x]= value;
   }
@@ -73,6 +98,19 @@ class Matrix<T>{
     return this._data[y * this._col +x];
   }
 
+  void addValue(int x, int y, T value) {
+    insert(x, y, getValue(x, y) + value);
+  }
+
+  T getDataValue(int i) {
+    return this._data[i];
+  }
+
+  void setDataValue(int i, T value) {
+    this._data[i] = value;
+  }
+
+  int get size => this._data.length;
   int get cols => _col;
   int get rows => _row;
 }
