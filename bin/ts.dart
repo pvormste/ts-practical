@@ -14,12 +14,23 @@ void main(List<String> args) {
   String inputImage = "web/images/${argResults.arguments[1]}";
   int patchSize = int.parse(argResults.arguments[2]);
   String outputImage = "web/images/${argResults.arguments[3]}";
+  String guidanceImage = "";
+
+  if(argResults.arguments.length > 4) {
+    guidanceImage = "web/images/${argResults.arguments[4]}";
+  }
+
 
   // Invoke class
   Texturesynthesis ts = new Texturesynthesis();
 
   // Read image
   ts.inputImage = decodeImage(new Io.File(inputImage).readAsBytesSync());
+
+  Image guidance = null;
+  if(argResults.arguments.length > 4) {
+    guidance = decodeImage(new Io.File(guidanceImage).readAsBytesSync());
+  }
 
   // Output image
   Image output = null;
@@ -43,6 +54,12 @@ void main(List<String> args) {
       break;
     case 4:
       output = ts.methodMultiresolution(2, patchSize, 3, MultiResMethod.exampleBased);
+      break;
+    case 5:
+      output = ts.methodExampleBasedWithGuidance(ts.inputImage, guidance, ts.synImage, 2, patchSize, true);
+      break;
+    case 6:
+      output = ts.methodBidirectional(ts.inputImage, ts.synImage, 5, patchSize);
       break;
   }
   //print

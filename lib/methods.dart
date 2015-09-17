@@ -134,6 +134,7 @@ class Texturesynthesis {
 
   }
 
+  // ==== Example Based
   Image methodExampleBased(Image inputImg, Image synImg, int scaler, int patchSize, [bool singleResolution = false]) {
 
     if(singleResolution) {
@@ -152,7 +153,7 @@ class Texturesynthesis {
 
     // Iterations
     int iter = 0;
-    int numIter = 20;
+    int numIter = 5;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
@@ -187,7 +188,7 @@ class Texturesynthesis {
       // Going through the synImage finding every patch
       for (int y = 0; y < yMax; ++y) {
         for (int x = 0; x < xMax; ++x) {
-          int currPatch = y * yMax + x;
+          int currPatch = y * xMax + x;
 
           if (currPatch % 100 == 0)
             print("Iteration: ${iter+1}/${numIter} - Calculating patch ${currPatch} of ${patchNum}");
@@ -257,6 +258,189 @@ class Texturesynthesis {
 
     return synImg;
   }
+
+  // ==== Example-based with guidance
+  Image methodExampleBasedWithGuidance(Image inputImg, Image guidance, Image synImg, int scaler, int patchSize, [bool singleResolution = false]) {
+
+    if(singleResolution) {
+      // Resizing synImage, noising
+      synImg = copyResize(inputImg, inputImg.width * scaler, inputImg.height * scaler);
+      synImg = noise(synImg, 5000.0);
+    }
+    else {
+      synImg = copyResize(synImg, inputImg.width * scaler, inputImg.height * scaler);
+    }
+
+    // .
+    int yMax = synImg.height - patchSize +1;
+    int xMax = synImg.width - patchSize +1;
+    int patchNum = yMax * xMax;
+
+    // Iterations
+    int iter = 0;
+    int numIter = 5;
+
+    //Matrix for saving best matching patches
+    Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
+
+    // Matrix for saving the color values
+    Matrix <RGB> colorMatrix = new Matrix(synImg.width, synImg.height);
+
+    // Matrix for counting the overlap
+    Matrix <int> countMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, 1);
+
+    // Guidance Matrix
+    Matrix<RGB> guidanceMatrix = new Matrix(guidance.width, guidance.height);
+
+    // Init guidance matrix values
+    for(int y = 0; y < guidance.height; ++y) {
+      for(int x = 0; x < guidance.width; ++x) {
+        int color = guidance.getPixel(x, y);
+        int red = getRed(color);
+        int green = getGreen(color);
+        int blue = getBlue(color);
+
+        guidanceMatrix.insert(x, y, new RGB(red, green, blue));
+      }
+    }
+
+    // List for the input image for the coherent method
+    List<Image> input = new List<Image>()
+      ..add(inputImg);
+
+    // Creating the Mask for comparison
+    List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
+
+    while(iter < numIter) {
+      // Setup Color Matrix
+      for(int y = 0; y < synImg.height; ++y) {
+        for(int x = 0; x < synImg.width; ++x) {
+          int color = synImg.getPixel(x, y);
+          int red = getRed(color);
+          int green = getGreen(color);
+          int blue = getBlue(color);
+
+          colorMatrix.insert(x, y, new RGB(red, green, blue));
+        }
+      }
+
+      // Going through the synImage finding every patch
+      for (int y = 0; y < yMax; ++y) {
+        for (int x = 0; x < xMax; ++x) {
+          int currPatch = y * xMax + x;
+
+          if (currPatch % 100 == 0)
+            print("Iteration: ${iter+1}/${numIter} - Calculating patch ${currPatch} of ${patchNum}");
+
+          // Creating ComparisonMask
+          int i = 0;
+          for (int patchY = y; patchY < y + patchSize; ++patchY) {
+            for (int patchX = x; patchX < x + patchSize; ++patchX) {
+              mask[i] = new ComparisonMaskElement.isAllowed(synImg.getPixel(patchX, patchY));
+              ++i;
+            }
+          }
+          bestMatch.insert(x, y, findCoherentPatch(input, mask, patchSize, patchSize >> 1, withRotation:false));
+        }
+      }
+
+      for (int y = 0; y < yMax; ++y) {
+        for (int x = 0; x < xMax; ++x) {
+          Vector3 posPatchInInput = bestMatch.getValue(x, y);
+
+          for(int patchY = 0; patchY < patchSize; ++patchY){
+            for(int patchX = 0; patchX < patchSize; ++patchX){
+
+              int color = inputImg.getPixel(posPatchInInput.x + patchX, posPatchInInput.y + patchY);
+
+              int red = getRed(color);
+              int green = getGreen(color);
+              int blue = getBlue(color);
+
+
+              int newRed = colorMatrix.getValue(x + patchX, y + patchY).red + red;
+              int newGreen = colorMatrix.getValue(x + patchX, y + patchY).green + green;
+              int newBlue = colorMatrix.getValue(x + patchX, y + patchY).blue + blue;
+
+              int newCount = countMatrix.getValue(x + patchX, y + patchY) + 1;
+
+              colorMatrix.insert(x + patchX, y + patchY, new RGB(newRed, newGreen, newBlue));
+              countMatrix.insert(x + patchX, y + patchY, newCount);
+            }
+          }
+        }
+      }
+
+      for(int i = 0; i < colorMatrix.size; ++i) {
+        RGB currentColor = colorMatrix.getDataValue(i);
+        int divider = countMatrix.getDataValue(i);
+
+        currentColor.red ~/= divider;
+        currentColor.green ~/= divider;
+        currentColor.blue ~/= divider;
+
+        // Add guidance colors
+        RGB guidanceColor = guidanceMatrix.getDataValue(i);
+        currentColor.red = (currentColor.red + (guidanceColor.red * 0.2).truncate()) >> 1;
+        currentColor.green = (currentColor.green + (guidanceColor.green * 0.2).truncate()) >> 1;
+        currentColor.blue = (currentColor.blue + (guidanceColor.blue * 0.2).truncate()) >> 1;
+
+        colorMatrix.setDataValue(i,  currentColor);
+      }
+
+
+
+
+      for (int y = 0; y < synImg.height; ++y) {
+        for (int x = 0; x < synImg.width; ++x) {
+          synImg.setPixelRGBA(x, y, colorMatrix.getValue(x, y).red, colorMatrix.getValue(x, y).green, colorMatrix.getValue(x, y).blue);
+        }
+      }
+
+
+
+      //colorMatrix.resetMatrix(new RGB(0, 0, 0));
+      countMatrix.resetMatrix(0);
+      print("####  Iteration ${iter +1} finished!  ####################################");
+      ++iter;
+    }
+
+    return synImg;
+  }
+
+  // ==== Bidirectional Similarity
+  Image methodBidirectional(Image inputImg, Image synImg, int iterations, int patchSize) {
+
+    Image tempImg = copyResize(inputImg, inputImg.width, inputImg.height);
+
+    int yMaxInput = inputImg.height - patchSize +1;
+    int xMaxInput = inputImg.width - patchSize +1;
+    int inputPatchNum = yMaxInput * xMaxInput;
+
+    for(int i = 0; i < iterations; ++i) {
+      print("Iteration ${i + 1} of ${iterations}");
+
+      int yMaxSyn = synImg.height - patchSize +1;
+      int xMaxSyn = synImg.width - patchSize +1;
+      int synPatchNum = yMaxSyn * xMaxSyn;
+
+      // Resize to a size of 90%
+      synImg = copyResize(inputImg, (tempImg.width * 0.9).truncate(), (tempImg.height * 0.9).truncate());
+
+      for (int y = 0; y < yMaxSyn; ++y){
+        for (int x = 0; x < xMaxSyn; ++x){
+
+        }
+      }
+
+
+      // inputImg is now the synImg
+      tempImg = synImg;
+    }
+
+    return synImg;
+  }
+
   //##########################
   // Helper functions
   //##########################
