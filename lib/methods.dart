@@ -153,7 +153,7 @@ class Texturesynthesis {
 
     // Iterations
     int iter = 0;
-    int numIter = 5;
+    int numIter = 15;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
@@ -172,6 +172,9 @@ class Texturesynthesis {
     // Creating the Mask for comparison
     List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
 
+    // overlap
+    int overlap = 3;
+
     while(iter < numIter) {
       // Setup Color Matrix
       for(int y = 0; y < synImg.height; ++y) {
@@ -186,12 +189,12 @@ class Texturesynthesis {
       }
 
       // Going through the synImage finding every patch
-      for (int y = 0; y < yMax; ++y) {
-        for (int x = 0; x < xMax; ++x) {
+      for (int y = 0; y < yMax; y = y + overlap) {
+        for (int x = 0; x < xMax; x = x + overlap) {
           int currPatch = y * xMax + x;
 
           if (currPatch % 100 == 0)
-            print("Iteration: ${iter+1}/${numIter} - Calculating patch ${currPatch} of ${patchNum}");
+            print("Iteration: ${iter+1}/${numIter} - Calculating patch ${(currPatch/overlap).truncate()} of ${(patchNum/overlap).truncate()}");
 
           // Creating ComparisonMask
           int i = 0;
@@ -205,8 +208,8 @@ class Texturesynthesis {
         }
       }
 
-      for (int y = 0; y < yMax; ++y) {
-        for (int x = 0; x < xMax; ++x) {
+      for (int y = 0; y < yMax; y = y + overlap) {
+        for (int x = 0; x < xMax; x = x + overlap) {
           Vector3 posPatchInInput = bestMatch.getValue(x, y);
 
           for(int patchY = 0; patchY < patchSize; ++patchY){
@@ -225,6 +228,8 @@ class Texturesynthesis {
 
               int newCount = countMatrix.getValue(x + patchX, y + patchY) + 1;
 
+             // print("${x+patchX}:${y+patchY} ${newCount}");
+
               colorMatrix.insert(x + patchX, y + patchY, new RGB(newRed, newGreen, newBlue));
               countMatrix.insert(x + patchX, y + patchY, newCount);
             }
@@ -233,12 +238,18 @@ class Texturesynthesis {
       }
 
       for(int i = 0; i < colorMatrix.size; ++i) {
+
         RGB currentColor = colorMatrix.getDataValue(i);
         int divider = countMatrix.getDataValue(i);
+        //print("${i}: ${divider}");
+        //if(divider ==  0) {
+         // print("${i}: ${divider}");
+          currentColor.red ~/= divider;
+          currentColor.green ~/= divider;
+          currentColor.blue ~/= divider;
+        //}
 
-        currentColor.red ~/= divider;
-        currentColor.green ~/= divider;
-        currentColor.blue ~/= divider;
+
         colorMatrix.setDataValue(i,  currentColor);
       }
 
@@ -251,7 +262,7 @@ class Texturesynthesis {
 
 
       //colorMatrix.resetMatrix(new RGB(0, 0, 0));
-      countMatrix.resetMatrix(0);
+      countMatrix.resetMatrix(1);
       print("####  Iteration ${iter +1} finished!  ####################################");
       ++iter;
     }
@@ -278,7 +289,7 @@ class Texturesynthesis {
 
     // Iterations
     int iter = 0;
-    int numIter = 5;
+    int numIter = 10;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
