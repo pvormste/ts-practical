@@ -320,6 +320,11 @@ class Texturesynthesis {
     List<Image> guidanceList = new List<Image>()
       ..add(guidance);
 
+    // List for the input image for the coherent method
+    List<Image> input = new List<Image>()
+      ..add(inputImg);
+
+
     // Find b est matches for guidance (only once!!!!)
     for (int y = 0; y < yMaxGuid; y = y + overlap) {
       for (int x = 0; x < xMaxGuid; x = x + overlap) {
@@ -336,14 +341,9 @@ class Texturesynthesis {
             ++i;
           }
         }
-        guidanceMatches.insert(x, y, findCoherentPatch(guidanceList, guidanceMask, patchSize, patchSize >> 1, withRotation:false));
+        guidanceMatches.insert(x, y, findCoherentPatch(input, guidanceMask, patchSize, patchSize >> 1, withRotation:false));
       }
     }
-
-    // List for the input image for the coherent method
-    List<Image> input = new List<Image>()
-      ..add(inputImg);
-
 
 
     while(iter < numIter) {
