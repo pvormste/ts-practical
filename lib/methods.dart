@@ -282,36 +282,61 @@ class Texturesynthesis {
       synImg = copyResize(synImg, inputImg.width * scaler, inputImg.height * scaler);
     }
 
-    // .
-    int yMax = synImg.height - patchSize +1;
-    int xMax = synImg.width - patchSize +1;
-    int patchNum = yMax * xMax;
+    // Syn Vars
+    int yMaxSyn = synImg.height - patchSize +1;
+    int xMaxSyn = synImg.width - patchSize +1;
+    int patchNumSyn = yMaxSyn * xMaxSyn;
+
+    // Guidance Vars
+    int yMaxGuid = guidance.height - patchSize +1;
+    int xMaxGuid = guidance.width - patchSize +1;
+    int patchNumGuid = yMaxGuid * xMaxGuid;
 
     // Iterations
     int iter = 0;
-    int numIter = 10;
+    int numIter = 15;
+
+    // overlap
+    int overlap = 3;
 
     //Matrix for saving best matching patches
-    Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMax, yMax);
+    Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMaxSyn, yMaxSyn);
 
     // Matrix for saving the color values
     Matrix <RGB> colorMatrix = new Matrix(synImg.width, synImg.height);
+
 
     // Matrix for counting the overlap
     Matrix <int> countMatrix = new Matrix.fillOnCreate(synImg.width, synImg.height, 1);
 
     // Guidance Matrix
-    Matrix<RGB> guidanceMatrix = new Matrix(guidance.width, guidance.height);
+    Matrix<Vector3> guidanceMatches = new Matrix(guidance.width, guidance.height);
 
-    // Init guidance matrix values
-    for(int y = 0; y < guidance.height; ++y) {
-      for(int x = 0; x < guidance.width; ++x) {
-        int color = guidance.getPixel(x, y);
-        int red = getRed(color);
-        int green = getGreen(color);
-        int blue = getBlue(color);
+    // Creating the Mask for comparison
+    List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
+    List<ComparisonMaskElement> guidanceMask = new List<ComparisonMaskElement>(patchSize*patchSize);
 
-        guidanceMatrix.insert(x, y, new RGB(red, green, blue));
+    // List for the input image for the coherent method
+    List<Image> guidanceList = new List<Image>()
+      ..add(guidance);
+
+    // Find b est matches for guidance (only once!!!!)
+    for (int y = 0; y < yMaxGuid; y = y + overlap) {
+      for (int x = 0; x < xMaxGuid; x = x + overlap) {
+        int currPatch = y * xMaxGuid + x;
+
+        if (currPatch % 100 == 0)
+          print("Setting up patch ${(currPatch/overlap).truncate()} of ${(patchNumGuid/overlap).truncate()} guidance image");
+
+        // Creating ComparisonMask
+        int i = 0;
+        for (int patchY = y; patchY < y + patchSize; ++patchY) {
+          for (int patchX = x; patchX < x + patchSize; ++patchX) {
+            guidanceMask[i] = new ComparisonMaskElement.isAllowed(guidance.getPixel(patchX, patchY));
+            ++i;
+          }
+        }
+        guidanceMatches.insert(x, y, findCoherentPatch(guidanceList, guidanceMask, patchSize, patchSize >> 1, withRotation:false));
       }
     }
 
@@ -319,8 +344,7 @@ class Texturesynthesis {
     List<Image> input = new List<Image>()
       ..add(inputImg);
 
-    // Creating the Mask for comparison
-    List<ComparisonMaskElement> mask = new List<ComparisonMaskElement>(patchSize*patchSize);
+
 
     while(iter < numIter) {
       // Setup Color Matrix
@@ -336,12 +360,12 @@ class Texturesynthesis {
       }
 
       // Going through the synImage finding every patch
-      for (int y = 0; y < yMax; ++y) {
-        for (int x = 0; x < xMax; ++x) {
-          int currPatch = y * xMax + x;
+      for (int y = 0; y < yMaxSyn; y = y + overlap) {
+        for (int x = 0; x < xMaxSyn; x = x + overlap) {
+          int currPatch = y * xMaxSyn + x;
 
           if (currPatch % 100 == 0)
-            print("Iteration: ${iter+1}/${numIter} - Calculating patch ${currPatch} of ${patchNum}");
+            print("Iteration: ${iter+1}/${numIter} - Calculating patch ${(currPatch/overlap).truncate()} of ${(patchNumSyn/overlap).truncate()}");
 
           // Creating ComparisonMask
           int i = 0;
@@ -355,18 +379,20 @@ class Texturesynthesis {
         }
       }
 
-      for (int y = 0; y < yMax; ++y) {
-        for (int x = 0; x < xMax; ++x) {
+      for (int y = 0; y < yMaxSyn; y = y + overlap) {
+        for (int x = 0; x < xMaxSyn; x = x + overlap) {
           Vector3 posPatchInInput = bestMatch.getValue(x, y);
+          Vector3 posPatchInInputGuidance = guidanceMatches.getValue(x, y); // Guidance
 
           for(int patchY = 0; patchY < patchSize; ++patchY){
             for(int patchX = 0; patchX < patchSize; ++patchX){
 
               int color = inputImg.getPixel(posPatchInInput.x + patchX, posPatchInInput.y + patchY);
+              int colorGuidance = inputImg.getPixel(posPatchInInputGuidance.x + patchX, posPatchInInputGuidance.y + patchY);// Guidance
 
-              int red = getRed(color);
-              int green = getGreen(color);
-              int blue = getBlue(color);
+              int red = ((getRed(color) + getRed(colorGuidance)) / 2).truncate(); // Guidance
+              int green =  ((getGreen(color) + getGreen(colorGuidance)) / 2).truncate(); // Guidance
+              int blue =  ((getBlue(color) + getBlue(colorGuidance)) / 2).truncate(); // Guidance
 
 
               int newRed = colorMatrix.getValue(x + patchX, y + patchY).red + red;
@@ -374,6 +400,8 @@ class Texturesynthesis {
               int newBlue = colorMatrix.getValue(x + patchX, y + patchY).blue + blue;
 
               int newCount = countMatrix.getValue(x + patchX, y + patchY) + 1;
+
+              // print("${x+patchX}:${y+patchY} ${newCount}");
 
               colorMatrix.insert(x + patchX, y + patchY, new RGB(newRed, newGreen, newBlue));
               countMatrix.insert(x + patchX, y + patchY, newCount);
@@ -383,24 +411,20 @@ class Texturesynthesis {
       }
 
       for(int i = 0; i < colorMatrix.size; ++i) {
+
         RGB currentColor = colorMatrix.getDataValue(i);
         int divider = countMatrix.getDataValue(i);
-
+        //print("${i}: ${divider}");
+        //if(divider ==  0) {
+        // print("${i}: ${divider}");
         currentColor.red ~/= divider;
         currentColor.green ~/= divider;
         currentColor.blue ~/= divider;
+        //}
 
-        // Add guidance colors
-        RGB guidanceColor = guidanceMatrix.getDataValue(i);
-        currentColor.red = (currentColor.red + (guidanceColor.red * 0.2).truncate()) >> 1;
-        currentColor.green = (currentColor.green + (guidanceColor.green * 0.2).truncate()) >> 1;
-        currentColor.blue = (currentColor.blue + (guidanceColor.blue * 0.2).truncate()) >> 1;
 
         colorMatrix.setDataValue(i,  currentColor);
       }
-
-
-
 
       for (int y = 0; y < synImg.height; ++y) {
         for (int x = 0; x < synImg.width; ++x) {
@@ -411,7 +435,7 @@ class Texturesynthesis {
 
 
       //colorMatrix.resetMatrix(new RGB(0, 0, 0));
-      countMatrix.resetMatrix(0);
+      countMatrix.resetMatrix(1);
       print("####  Iteration ${iter +1} finished!  ####################################");
       ++iter;
     }
