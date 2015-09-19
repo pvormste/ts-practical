@@ -297,7 +297,7 @@ class Texturesynthesis {
     int numIter = 15;
 
     // overlap
-    int overlap = 3;
+    int overlap = 1;
 
     //Matrix for saving best matching patches
     Matrix <Vector3> bestMatch = new Matrix<Vector3>(xMaxSyn, yMaxSyn);
