@@ -22,7 +22,7 @@ This practical was about implementing algorithms of texture synthesis using a la
 | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/wall.png">      | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/wall_10x10.png">      |   <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/wall_10x10.png"> |
 | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/metal_small.png"> | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/metal_10x10.png">      |    <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/metal_10x10.png"> |
 
-### Example-based synthesis
+### Example-based synthesis (patch size 10x10 px and 15 iterations)
 
 | Input image   | Output (7px overlap) | Output (full overlap)  |
 | ------------- |---------------| ------|
