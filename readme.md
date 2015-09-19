@@ -14,15 +14,13 @@ This practical was about implementing algorithms of texture synthesis using a la
 
 ## Examples
 
-### Non parametric sampling
+### Non parametric sampling (patch size 10x10 px)
 
-#### Single resolution
-
-| Input image   | Output (patchsize 10x10)           | Cool  |
+| Input image   | Output (single resolution) | Output (multi resolution)  |
 | ------------- |---------------| ------|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
+| <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/simple.jpg">      | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/simple_10x10.png"> | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/simple_10x10.png"> |
+| <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/wall.png">      | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/wall-10x10.png">      |   <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/wall_10x10.png"> |
+| <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/metal_small.png"> | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/metal_10x10.png">      |    <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/metal_10x10.png"> |
 
 ## License
 
