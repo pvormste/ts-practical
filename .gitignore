@@ -63,5 +63,5 @@ packages
 # Include when developing application packages.
 pubspec.lock
 
-examples/nonparametric/single/simple-10x10.png
+web/images/output*
 

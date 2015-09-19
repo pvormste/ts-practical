@@ -12,6 +12,18 @@ This practical was about implementing algorithms of texture synthesis using a la
 * ["Fast Texture Synthesis using Tree-structured Vector Quantization"](https://graphics.stanford.edu/papers/texture-synthesis-sig00/texture.pdf) by Li-Yi Wei and Marc Levoy
 * ["Texture Optimization for Example-based Synthesis"](http://physbam.stanford.edu/~kwatra//publications/TO/TO-final.pdf) by Vivek Kwatra, Irfan Essa, Aaron Bobick and Nipun Kwatra
 
+## Examples
+
+### Non parametric sampling
+
+#### Single resolution
+
+| Input image   | Output (patchsize 10x10)           | Cool  |
+| ------------- |---------------| ------|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
+
 ## License
 
 ### MIT-License
