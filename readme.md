@@ -22,6 +22,14 @@ This practical was about implementing algorithms of texture synthesis using a la
 | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/wall.png">      | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/wall-10x10.png">      |   <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/wall_10x10.png"> |
 | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/metal_small.png"> | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/single/metal_10x10.png">      |    <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/nonparametric/multi/metal_10x10.png"> |
 
+### Example-based synthesis
+
+| Input image   | Output (7px overlap) | Output (full overlap)  |
+| ------------- |---------------| ------|
+| <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/simple.jpg">      | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/examplebased/seven_px/simple_10x10.png"> | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/examplebased/full_overlap/simple_10x10.png"> |
+| <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/wall.png">      | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/examplebased/seven_px/wall-10x10.png">      |   <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/examplebased/full_overlap/wall_10x10.png"> |
+| <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/web/images/metal_small.png"> | <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/examplebased/seven_px/metal_10x10.png">      |    <img src="https://raw.githubusercontent.com/pvormste/ts-practical/master/examples/examplebased/full_overlap/metal_10x10.png"> |
+
 ## License
 
 ### MIT-License
