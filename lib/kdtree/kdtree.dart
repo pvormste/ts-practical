@@ -1,139 +1,169 @@
 // Copyright 2013 Park "segfault" Joon Kyu <segfault87@gmail.com>
 // Source: https://gist.github.com/segfault87/6259952
+// Changed Vec4 to multi dimensional vector
 library texturesynthesis.kdtree;
 
-import 'dart:typed_data';
+//import 'dart:typed_data';
 import 'dart:math';
 
-const num EPSILON = 0.000001;
-const int DIMENSIONS = 3;
+const num EPSILON = 0.1;
+int DIMENSIONS = 3;
 
-class Vec4 implements Comparable {
-  Float32List val;
+class VecMultiDimensionInt implements Comparable {
+  List<int> val;
+  int dimension;
 
-  Vec4() {
-    val = new Float32List(4);
-    val[0] = 0.0; val[1] = 0.0; val[2] = 0.0; val[3] = 1.0;
+  VecMultiDimensionInt(int dimension) {
+    this.dimension = dimension;
+    val = new List(this.dimension);
+
+    for(int i = 0; i < this.dimension; ++i) {
+      val[i] = 0;
+    }
   }
 
-  Vec4.xyz(num x, num y, num z) {
-    val = new Float32List(4);
-    val[0] = x; val[1] = y; val[2] = z; val[3] = 1.0;
+  VecMultiDimensionInt.fromList(List<int> source) {
+    this.dimension = source.length;
+    val = new List(this.dimension);
+
+    for(int i = 0; i < this.dimension; ++i) {
+      val[i] = source[i];
+    }
   }
 
-  Vec4.xyzw(num x, num y, num z, num w) {
-    val = new Float32List(4);
-    val[0] = x; val[1] = y; val[2] = z; val[3] = w;
-  }
+  // TODO COPY
 
-  Vec4.copy(Vec4 other) {
-    val = new Float32List(4);
-    val[0] = other.val[0];
-    val[1] = other.val[1];
-    val[2] = other.val[2];
-    val[3] = other.val[3];
-  }
-
-  num x() => val[0];
-  num y() => val[1];
-  num z() => val[2];
-  num w() => val[3];
-
-  num operator [] (int index) => val[index];
+  int operator [] (int index) => val[index];
   void operator []= (int index, num v) {
     val[index] = v;
   }
 
-  setX(num v) => val[0] = v;
-  setY(num v) => val[1] = v;
-  setZ(num v) => val[2] = v;
-  setW(num v) => val[3] = v;
+  num length() {
+    int sum = 0;
 
-  int compareTo(Vec4 other) {
+    for(int i = 0; i < this.dimension; ++i) {
+      int square = val[i] * val[i];
+
+      sum += square;
+    }
+
+    return sqrt(sum);
+  }
+
+  int compareTo(VecMultiDimensionInt other) {
     print(length());
     return length().compareTo(other.length());
   }
 
-  num length() {
-    return sqrt(x()*x() + y()*y() + z()*z());
-  }
-
-  Vec4 normalize() {
-    num r = length();
-
-    if (r != 0.0)
-      return new Vec4.xyz(x() / r, y() / r, z() / r);
-    else
-      return new Vec4();
-  }
+  // TODO NORMALIZE
 
   String toString() {
-    return '(${x()}, ${y()}, ${z()})';
+    String str = '(';
+
+    for(int i = 0; i < this.dimension; ++i) {
+      if(i < this.dimension - 1)
+        str += '${val[i]}, ';
+      else
+        str += '${val[i]})';
+    }
+
+    return str;
   }
 
-  String toDat() {
-    return '${x()} ${y()} ${z()}';
+  // TODO toDat
+
+  VecMultiDimensionInt operator + (VecMultiDimensionInt rhs) {
+    List<int> newVec = [];
+
+    for(int i = 0; i < this.dimension; ++i) {
+      int sum = val[i] + rhs.val[i];
+
+      newVec.add(sum);
+    }
+
+
+    return new VecMultiDimensionInt.fromList(newVec);
   }
 
-  Vec4 operator + (Vec4 rhs) {
-    return new Vec4.xyz(x()+rhs.x(), y()+rhs.y(), z()+rhs.z());
+  VecMultiDimensionInt operator - (VecMultiDimensionInt rhs) {
+    List<int> newVec = [];
+
+    for(int i = 0; i < this.dimension; ++i) {
+      int diff = val[i] - rhs.val[i];
+
+      newVec.add(diff);
+    }
+
+
+    return new VecMultiDimensionInt.fromList(newVec);
   }
 
-  Vec4 operator - (Vec4 rhs) {
-    return new Vec4.xyz(x()-rhs.x(), y()-rhs.y(), z()-rhs.z());
+  VecMultiDimensionInt operator - () {
+    List<int> newVec = [];
+
+    for(int i = 0; i < this.dimension; ++i) {
+      int newVal = val[i] * -1;
+
+      newVec.add(newVal);
+    }
+
+
+    return new VecMultiDimensionInt.fromList(newVec);
   }
 
-  Vec4 operator - () {
-    return new Vec4.xyz(-x(), -y(), -z());
+  VecMultiDimensionInt operator * (num s) {
+    List<int> newVec = [];
+
+    for(int i = 0; i < this.dimension; ++i) {
+      int prod = val[i] * s;
+
+      newVec.add(prod);
+    }
+
+
+    return new VecMultiDimensionInt.fromList(newVec);
   }
 
-  Vec4 operator * (num s) {
-    return new Vec4.xyz(x()*s, y()*s, z()*s);
-  }
-
-  bool operator == (Vec4 other) {
+  bool operator == (VecMultiDimensionInt other) {
     return equals(this, other);
   }
 
-  static num distance(Vec4 a, Vec4 b) {
-    num x = a.x() - b.x();
-    num y = a.y() - b.y();
-    num z = a.z() - b.z();
+  static num distance(VecMultiDimensionInt a, VecMultiDimensionInt b) {
 
-    return sqrt(x*x + y*y + z*z);
+    int sum = 0;
+
+    for(int i = 0; i < DIMENSIONS; ++i) {
+      int diff = a.val[i] - b.val[i];
+      diff = diff*diff;
+
+      sum += diff;
+    }
+
+    return sqrt(sum);
   }
 
-  static num angle(Vec4 a, Vec4 b) {
-    return acos(dot(a, b) / (sqrt(a.x()*a.x() + a.y()*a.y() + a.z()*a.z()) *
-    sqrt(b.x()*b.x() + b.y()*b.y() + b.z()*b.z())));
-  }
+  // TODO angle
 
-  static num dot(Vec4 a, Vec4 b) {
-    return a.x()*b.x() + a.y()*b.y() + a.z()*b.z();
-  }
+  // TODO cross
 
-  static Vec4 cross(Vec4 a, Vec4 b) {
-    return new Vec4.xyz(
-        a.y()*b.z() - a.z()*b.y(),
-        a.z()*b.x() - a.x()*b.z(),
-        a.x()*b.y() - a.y()*b.x());
-  }
+  static bool equals(VecMultiDimensionInt a, VecMultiDimensionInt b) {
 
-  static bool equals(Vec4 a, Vec4 b) {
-    num x = (a.x() - b.x()).abs();
-    num y = (a.y() - b.y()).abs();
-    num z = (a.z() - b.z()).abs();
-    num w = (a.w() - b.w()).abs();
+    for(int i = 0; i < DIMENSIONS; ++i) {
+      int diff = a.val[i] - b.val[i];
 
-    if (x < EPSILON && y < EPSILON && z < EPSILON && w < EPSILON)
-      return true;
-    else
-      return false;
+      if(diff < 0)
+        diff *= -1;
+
+      if(diff >= EPSILON)
+        return false;
+    }
+
+    return true;
   }
 }
 
 class KdNodeData<T> {
-  Vec4 vec;
+  VecMultiDimensionInt vec;
   T tag;
 
   KdNodeData(this.vec, this.tag);
@@ -180,7 +210,7 @@ class KdTree<T> {
     return node;
   }
 
-  KdTree.fromList(List<Vec4> points, List<T> tags) {
+  KdTree.fromList(List<VecMultiDimensionInt> points, List<T> tags) {
     List<KdNodeData<T>> interweaved = new List<KdNodeData<T>>();
     for (int i = 0; i < points.length; ++i) {
       T tag;
@@ -194,7 +224,7 @@ class KdTree<T> {
     root = buildTree(interweaved, 0, null);
   }
 
-  bool insert(Vec4 point, T tag, {bool overwrite: false}) {
+  bool insert(VecMultiDimensionInt point, T tag, {bool overwrite: false}) {
     KdNodeData<T> existing = exact(point);
     if (existing != null) {
       print ('multiple occurrence found');
@@ -237,12 +267,12 @@ class KdTree<T> {
     return true;
   }
 
-  void remove(Vec4 point) {
+  void remove(VecMultiDimensionInt point) {
     KdNode<T> nodeSearch(KdNode<T> node) {
       if (node == null)
         return null;
 
-      if (Vec4.equals(node.data.vec, point))
+      if (VecMultiDimensionInt.equals(node.data.vec, point))
         return node;
 
       int dimension = node.dimension;
@@ -333,7 +363,7 @@ class KdTree<T> {
     removeNode(node);
   }
 
-  KdNodeData<T> exact(Vec4 point) {
+  KdNodeData<T> exact(VecMultiDimensionInt point) {
     KdNodeData<T> result = nearest(point);
 
     if (result == null)
@@ -345,7 +375,7 @@ class KdTree<T> {
       return null;
   }
 
-  KdNodeData<T> nearest(Vec4 point) {
+  KdNodeData<T> nearest(VecMultiDimensionInt point) {
     if (root == null)
       return null;
 
@@ -368,9 +398,9 @@ class KdTree<T> {
       }
 
       min = findNearest(near, depth + 1);
-      if (dist * dist < Vec4.distance(point, min.data.vec))
+      if (dist * dist < VecMultiDimensionInt.distance(point, min.data.vec))
         min = findNearest(far, depth + 1);
-      if (Vec4.distance(point, node.data.vec) < Vec4.distance(point, min.data.vec))
+      if (VecMultiDimensionInt.distance(point, node.data.vec) < VecMultiDimensionInt.distance(point, min.data.vec))
         min = node;
 
       return min;
@@ -381,14 +411,14 @@ class KdTree<T> {
     return min.data;
   }
 
-  List<KdNodeData<T>> nearestMultiple(Vec4 point, int maxNodes) {
+  List<KdNodeData<T>> nearestMultiple(VecMultiDimensionInt point, int maxNodes) {
     BinaryHeap<BestMatch<T>> bestNodes = new BinaryHeap<BestMatch<T>>((BestMatch i) => -i.distance);
 
     void nearestSearch(KdNode<T> node) {
       KdNode<T> bestChild, otherChild;
       int dimension = node.dimension;
-      num ownDistance = Vec4.distance(point, node.data.vec);
-      Vec4 linearPoint = new Vec4();
+      num ownDistance = VecMultiDimensionInt.distance(point, node.data.vec);
+      VecMultiDimensionInt linearPoint = new VecMultiDimensionInt(DIMENSIONS);
       num linearDistance;
 
       void saveNode(KdNode<T> item, num distance) {
@@ -404,7 +434,7 @@ class KdTree<T> {
           linearPoint[i] = node.data.vec[i];
       }
 
-      linearDistance = Vec4.distance(linearPoint, node.data.vec);
+      linearDistance = VecMultiDimensionInt.distance(linearPoint, node.data.vec);
 
       if (node.right == null && node.left == null) {
         if (bestNodes.size() < maxNodes || ownDistance < bestNodes.peek().distance)
@@ -564,3 +594,127 @@ class BinaryHeap<T> {
     }
   }
 }
+
+/*class Vec4 implements Comparable {
+  Float32List val;
+
+  Vec4() {
+    val = new Float32List(4);
+    val[0] = 0.0; val[1] = 0.0; val[2] = 0.0; val[3] = 1.0;
+  }
+
+  Vec4.xyz(num x, num y, num z) {
+    val = new Float32List(4);
+    val[0] = x; val[1] = y; val[2] = z; val[3] = 1.0;
+  }
+
+  Vec4.xyzw(num x, num y, num z, num w) {
+    val = new Float32List(4);
+    val[0] = x; val[1] = y; val[2] = z; val[3] = w;
+  }
+
+  Vec4.copy(Vec4 other) {
+    val = new Float32List(4);
+    val[0] = other.val[0];
+    val[1] = other.val[1];
+    val[2] = other.val[2];
+    val[3] = other.val[3];
+  }
+
+  num x() => val[0];
+  num y() => val[1];
+  num z() => val[2];
+  num w() => val[3];
+
+  num operator [] (int index) => val[index];
+  void operator []= (int index, num v) {
+    val[index] = v;
+  }
+
+  setX(num v) => val[0] = v;
+  setY(num v) => val[1] = v;
+  setZ(num v) => val[2] = v;
+  setW(num v) => val[3] = v;
+
+  int compareTo(Vec4 other) {
+    print(length());
+    return length().compareTo(other.length());
+  }
+
+  num length() {
+    return sqrt(x()*x() + y()*y() + z()*z());
+  }
+
+  Vec4 normalize() {
+    num r = length();
+
+    if (r != 0.0)
+      return new Vec4.xyz(x() / r, y() / r, z() / r);
+    else
+      return new Vec4();
+  }
+
+  String toString() {
+    return '(${x()}, ${y()}, ${z()})';
+  }
+
+  String toDat() {
+    return '${x()} ${y()} ${z()}';
+  }
+
+  Vec4 operator + (Vec4 rhs) {
+    return new Vec4.xyz(x()+rhs.x(), y()+rhs.y(), z()+rhs.z());
+  }
+
+  Vec4 operator - (Vec4 rhs) {
+    return new Vec4.xyz(x()-rhs.x(), y()-rhs.y(), z()-rhs.z());
+  }
+
+  Vec4 operator - () {
+    return new Vec4.xyz(-x(), -y(), -z());
+  }
+
+  Vec4 operator * (num s) {
+    return new Vec4.xyz(x()*s, y()*s, z()*s);
+  }
+
+  bool operator == (Vec4 other) {
+    return equals(this, other);
+  }
+
+  static num distance(Vec4 a, Vec4 b) {
+    num x = a.x() - b.x();
+    num y = a.y() - b.y();
+    num z = a.z() - b.z();
+
+    return sqrt(x*x + y*y + z*z);
+  }
+
+  static num angle(Vec4 a, Vec4 b) {
+    return acos(dot(a, b) / (sqrt(a.x()*a.x() + a.y()*a.y() + a.z()*a.z()) *
+    sqrt(b.x()*b.x() + b.y()*b.y() + b.z()*b.z())));
+  }
+
+  static num dot(Vec4 a, Vec4 b) {
+    return a.x()*b.x() + a.y()*b.y() + a.z()*b.z();
+  }
+
+  static Vec4 cross(Vec4 a, Vec4 b) {
+    return new Vec4.xyz(
+        a.y()*b.z() - a.z()*b.y(),
+        a.z()*b.x() - a.x()*b.z(),
+        a.x()*b.y() - a.y()*b.x());
+  }
+
+  static bool equals(Vec4 a, Vec4 b) {
+    num x = (a.x() - b.x()).abs();
+    num y = (a.y() - b.y()).abs();
+    num z = (a.z() - b.z()).abs();
+    num w = (a.w() - b.w()).abs();
+
+    if (x < EPSILON && y < EPSILON && z < EPSILON && w < EPSILON)
+      return true;
+    else
+      return false;
+  }
+}*/
