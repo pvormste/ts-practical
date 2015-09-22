@@ -2,6 +2,7 @@ import 'dart:io' as Io;
 import 'package:image/image.dart';
 import 'package:texturesynthesis/methods.dart';
 import 'package:args/args.dart';
+import 'package:texturesynthesis/optimized.dart';
 
 
 void main(List<String> args) {
@@ -61,10 +62,15 @@ void main(List<String> args) {
     case 6:
       output = ts.methodBidirectional(ts.inputImage, ts.synImage, 5, patchSize);
       break;
+    case 7:
+      output = optimizedExampleBased(ts.inputImage, null, 2, patchSize);
+      break;
+    case 8:
+      output = optimizedMultiResolution(ts.inputImage, 2, patchSize, 2);
   }
   //print
   DateTime finishTime = new DateTime.now();
-  print("Start: ${now} | End: ${finishTime} | Execution Time: ${finishTime.difference(now).inMinutes}");
+  print("Start: ${now} | End: ${finishTime} | Execution Time: ${finishTime.difference(now).inSeconds} seconds");
 
   // Write file
   new Io.File(outputImage)
