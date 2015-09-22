@@ -8,7 +8,7 @@ Image optimizedExampleBased(Image inputImg, Image synImg, int scaler, int patchS
 
   // Settings
   int numIter = 20;
-  int overlap = 1;
+  int overlap = 4;
 
   // Setup Dimensions
   DIMENSIONS = patchSize * patchSize * 3;
@@ -17,10 +17,10 @@ Image optimizedExampleBased(Image inputImg, Image synImg, int scaler, int patchS
   if(synImg == null) {
     // Resizing synImage, noising
     synImg = copyResize(inputImg, inputImg.width * scaler, inputImg.height * scaler);
-    synImg = noise(synImg, 5000.0);
+    //synImg = noise(synImg, 100.0);
   }
   else {
-    synImg = copyResize(synImg, synImg.width * scaler, synImg.height * scaler);
+    synImg = copyResize(synImg, inputImg.width * scaler, inputImg.height * scaler);
   }
 
   // Input vars
@@ -123,11 +123,12 @@ Image optimizedExampleBased(Image inputImg, Image synImg, int scaler, int patchS
         KdNodeData nodeData = tree.nearest(patchVec);
         //bestMatchingPatches.insert(x, y, nodeData.tag);
         Vector2 bestMatch = nodeData.tag;
+        //print('${bestMatch.x}:${bestMatch.y}');
 
         for(int patchY = 0; patchY < patchSize; ++patchY) {
           for(int patchX = 0; patchX < patchSize; ++patchX) {
             RGB colorMat = colorMatrix.getValue(x + patchX, y + patchY);
-            int colorInp = inputImg.getPixel(bestMatch.x + patchSize, bestMatch.y + patchSize);
+            int colorInp = inputImg.getPixel(bestMatch.x + patchX, bestMatch.y + patchY);
             //int colorSyn = synImg.getPixel(x + patchX, y + patchY);
 
             int redInp = getRed(colorInp);
