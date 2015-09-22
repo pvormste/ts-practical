@@ -6,7 +6,7 @@ library texturesynthesis.kdtree;
 //import 'dart:typed_data';
 import 'dart:math';
 
-const num EPSILON = 0.1;
+const num EPSILON = 0.000001;
 int DIMENSIONS = 3;
 
 class VecMultiDimensionInt implements Comparable {

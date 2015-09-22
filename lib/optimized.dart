@@ -7,8 +7,8 @@ import 'methods.dart';
 Image optimizedExampleBased(Image inputImg, Image synImg, int scaler, int patchSize) {
 
   // Settings
-  int numIter = 20;
-  int overlap = 4;
+  int numIter = 15;
+  int overlap = 3;
 
   // Setup Dimensions
   DIMENSIONS = patchSize * patchSize * 3;
@@ -17,7 +17,7 @@ Image optimizedExampleBased(Image inputImg, Image synImg, int scaler, int patchS
   if(synImg == null) {
     // Resizing synImage, noising
     synImg = copyResize(inputImg, inputImg.width * scaler, inputImg.height * scaler);
-    //synImg = noise(synImg, 100.0);
+    synImg = noise(synImg, 5000.0);
   }
   else {
     synImg = copyResize(synImg, inputImg.width * scaler, inputImg.height * scaler);
