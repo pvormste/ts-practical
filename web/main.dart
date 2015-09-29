@@ -1,5 +1,7 @@
 import 'dart:html';
 import 'package:texturesynthesis/methods.dart';
+import 'package:texturesynthesis/html.dart';
+import 'package:image/image.dart';
 
 // HTML elements
 ImageElement inputImageElement = querySelector('#input-img');
@@ -10,6 +12,8 @@ ImageElement resultImage = querySelector('#result-img');
 
 // Texture synthesis
 Texturesynthesis ts;
+Image synImg;
+
 
 void  main() {
   // Init the main class
@@ -30,7 +34,7 @@ void initGUI() {
       //inputImageElement.src = "images/${fileChooser.value}";
 
       // Read image
-      ts.readImage(fileChooser.value, imageLoaded, inputImageElement);
+      readImageHTML(ts, fileChooser.value, imageLoaded, inputImageElement);
     }
     else {
       // Reset
@@ -44,15 +48,15 @@ void initGUI() {
       // Select method
       switch(methodChooser.value) {
         case "0":
-          ts.methodStarter(2, 32, 16);
+          synImg = ts.methodStarter(ts.inputImage, 2, 32, 16);
           break;
         case "1":
-          ts.methodNonParametricSampling(2, 32);
+          synImg = ts.methodNonParametricSampling(ts.inputImage, null, 2, 32, true);
           break;
       }
 
       // Show output image
-      ts.showOutputImage(resultImage);
+      showOutputImageHTML(synImg, resultImage);
     }
   });
 }

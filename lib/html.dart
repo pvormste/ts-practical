@@ -3,9 +3,10 @@ library texturesynthesis.html;
 import 'dart:html';
 import 'package:image/image.dart';
 import 'package:crypto/crypto.dart';
+import 'package:texturesynthesis/methods.dart';
 
 
-void readImageHTML(Image inputImage, String name, ImageElement loader, ImageElement inputImageElement) {
+void readImageHTML(Texturesynthesis ts, String name, ImageElement loader, ImageElement inputImageElement) {
   HttpRequest request = new HttpRequest();
   request.open('GET', 'images/${name}');
   request.overrideMimeType('text\/plain; charset=x-user-defined');
@@ -17,15 +18,15 @@ void readImageHTML(Image inputImage, String name, ImageElement loader, ImageElem
       }).join('').codeUnits;
 
       // Save image
-      inputImage = decodeImage(bytes);
+      ts.inputImage = decodeImage(bytes);
 
       // Visual feedback
       loader.src = 'images/success.png';
 
       // Set input element
       inputImageElement.src = 'images/${name}';
-      inputImageElement.width = inputImage.width;
-      inputImageElement.height = inputImage.height;
+      inputImageElement.width = ts.inputImage.width;
+      inputImageElement.height = ts.inputImage.height;
     }
     else{
       loader.src = 'images/fail.png';

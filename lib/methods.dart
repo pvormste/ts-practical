@@ -579,17 +579,19 @@ class Texturesynthesis {
 
 
   // ==== Starter function
-  void methodStarter(int scaler, int patchSize, int patchStride) {
+  Image methodStarter(Image inputImg, int scaler, int patchSize, int patchStride) {
+    Image synImg = null;
+
     // Init patches
-    int rowsInputPatch = inputImage.height - patchSize + 1;
-    int colsInputPatch = inputImage.width - patchSize + 1;
+    int rowsInputPatch = inputImg.height - patchSize + 1;
+    int colsInputPatch = inputImg.width - patchSize + 1;
     int numInputPatch = rowsInputPatch * colsInputPatch;
 
     // Init syn image
-    synImage = copyResize(inputImage, inputImage.width * scaler, inputImage.height * scaler);
-    int rowsSynPatch = (((synImage.height - patchSize) / patchStride).floor() + 1).toInt();
-    int colsSynPatch = (((synImage.width - patchSize) / patchStride).floor() + 1).toInt();
-    synImage = copyResize(synImage, (colsSynPatch - 1) * patchStride + patchSize, (rowsSynPatch - 1) * patchStride + patchSize);
+    synImg = copyResize(inputImg, inputImg.width * scaler, inputImg.height * scaler);
+    int rowsSynPatch = (((synImg.height - patchSize) / patchStride).floor() + 1).toInt();
+    int colsSynPatch = (((synImg.width - patchSize) / patchStride).floor() + 1).toInt();
+    synImg = copyResize(synImg, (colsSynPatch - 1) * patchStride + patchSize, (rowsSynPatch - 1) * patchStride + patchSize);
 
     // Synthesis
     Random rand = new Random();
@@ -607,11 +609,13 @@ class Texturesynthesis {
         // Padding by directly copying pixels
         for(int row_ = 0; row_ <  patchSize; ++row_) {
           for(int col_ = 0; col_ < patchSize; ++col_) {
-            synImage.setPixel(colSyn + col_, rowSyn + row_, inputImage.getPixel(colInput + col_, rowInput + row_));
+            synImg.setPixel(colSyn + col_, rowSyn + row_, inputImg.getPixel(colInput + col_, rowInput + row_));
           }
         }
       }
     }
+
+    return synImg;
   }
 
 }
